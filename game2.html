@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indonesia or Kenya? The Landscape Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e8473b; --green: #1fa971; --gold: #ffd166; --ink: #0d1b2a;
+    --card: rgba(13,27,42,.62);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Fredoka', system-ui, sans-serif; color: #fff; overflow: hidden;
+    background: var(--ink);
+  }
+
+  /* Full-screen photo background with slow zoom */
+  #bg {
+    position: fixed; inset: 0; background-size: cover; background-position: center;
+    transform: scale(1.05); transition: opacity .6s ease, transform 12s ease-out;
+    z-index: 0;
+  }
+  #bg.zoom { transform: scale(1.18); }
+  #shade {
+    position: fixed; inset: 0; z-index: 1;
+    background: linear-gradient(to bottom, rgba(13,27,42,.75) 0%, rgba(13,27,42,.05) 35%, rgba(13,27,42,.05) 55%, rgba(13,27,42,.9) 100%);
+  }
+
+  .screen { position: fixed; inset: 0; z-index: 2; display: none; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* START SCREEN */
+  #start { align-items: center; justify-content: center; text-align: center; padding: 24px; }
+  #start h1 {
+    font-size: clamp(40px, 8vw, 86px); margin: 0; line-height: 1; text-shadow: 0 6px 30px rgba(0,0,0,.5);
+  }
+  #start h1 span.a { color: var(--red); }
+  #start h1 span.b { color: var(--green); }
+  #start p { font-size: clamp(16px, 2.4vw, 24px); max-width: 560px; margin: 18px 0 30px; opacity: .92; }
+  .big-btn {
+    font-family: inherit; font-size: 26px; font-weight: 700; color: var(--ink);
+    background: var(--gold); border: 0; border-radius: 999px; padding: 16px 48px; cursor: pointer;
+    box-shadow: 0 8px 0 #c99a2e, 0 18px 30px rgba(0,0,0,.4);
+    transition: transform .1s, box-shadow .1s;
+  }
+  .big-btn:hover { transform: translateY(-2px); }
+  .big-btn:active { transform: translateY(6px); box-shadow: 0 2px 0 #c99a2e; }
+  .legend { display: flex; gap: 12px; margin-top: 26px; font-size: 14px; opacity: .9; }
+  .pill { padding: 6px 14px; border-radius: 999px; font-weight: 600; }
+
+  /* GAME HUD */
+  #hud {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 16px 22px;
+  }
+  .hud-chip {
+    background: var(--card); backdrop-filter: blur(8px); border-radius: 999px;
+    padding: 8px 18px; font-weight: 700; font-size: 18px;
+  }
+  #level.easy { background: #2e9e63; } #level.medium { background: #e09a1a; } #level.hard { background: #d63b3b; }
+  #dots { display: flex; gap: 6px; }
+  #dots i { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.28); transition: .3s; }
+  #dots i.now { background: #fff; transform: scale(1.25); }
+  #dots i.right { background: var(--green); } #dots i.wrong { background: var(--red); }
+
+  #stage { flex: 1; display: flex; align-items: flex-end; justify-content: center; padding: 0 20px; }
+  #prompt {
+    font-size: clamp(20px, 3.4vw, 34px); font-weight: 700; text-align: center; margin-bottom: 18px;
+    text-shadow: 0 4px 18px rgba(0,0,0,.7);
+  }
+
+  #choices { display: flex; gap: 18px; padding: 0 22px 28px; }
+  .choice {
+    flex: 1; font-family: inherit; border: 0; border-radius: 22px; color: #fff; cursor: pointer;
+    padding: 20px 10px; font-size: clamp(20px, 3.2vw, 32px); font-weight: 700;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    transition: transform .12s, filter .2s, opacity .3s;
+  }
+  .choice small { font-size: 14px; opacity: .85; font-weight: 600; }
+  #ca { background: linear-gradient(160deg, #ff6b5e, #c9302a); box-shadow: 0 8px 0 #8f1f1a, 0 16px 28px rgba(0,0,0,.45); }
+  #cb { background: linear-gradient(160deg, #2fd18f, #138a5b); box-shadow: 0 8px 0 #0b5c3b, 0 16px 28px rgba(0,0,0,.45); }
+  .choice:hover:not(:disabled) { transform: translateY(-4px); filter: brightness(1.08); }
+  .choice:active:not(:disabled) { transform: translateY(5px); }
+  .choice:disabled { cursor: default; }
+  .choice.dim { opacity: .35; filter: grayscale(.6); }
+  .choice.win { animation: pop .5s ease; outline: 5px solid var(--gold); }
+  @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.07)} 100%{transform:scale(1)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+  .shake { animation: shake .35s; }
+
+  /* REVEAL PANEL */
+  #reveal {
+    position: fixed; left: 50%; bottom: 0; z-index: 5; width: min(680px, 100%);
+    transform: translate(-50%, 110%); transition: transform .45s cubic-bezier(.2,.9,.3,1.2);
+    background: rgba(13,27,42,.94); backdrop-filter: blur(12px);
+    border-radius: 28px 28px 0 0; padding: 26px 26px 28px; text-align: center;
+    box-shadow: 0 -20px 50px rgba(0,0,0,.5);
+  }
+  #reveal.show { transform: translate(-50%, 0); }
+  #verdict { font-size: 38px; font-weight: 700; margin: 0; }
+  #verdict.good { color: #52e6a0; } #verdict.bad { color: #ff7d71; }
+  #pts { color: var(--gold); font-weight: 700; margin: 2px 0 10px; font-size: 18px; min-height: 24px; }
+  #place { font-size: 22px; font-weight: 700; }
+  #fact { margin: 8px 0 18px; opacity: .88; font-size: 17px; line-height: 1.4; }
+  #credit { font-size: 11px; opacity: .45; margin-top: 12px; }
+
+  /* END SCREEN */
+  #end { align-items: center; justify-content: center; text-align: center; padding: 24px; }
+  #end h2 { font-size: clamp(30px, 6vw, 56px); margin: 0; }
+  #final { font-size: clamp(70px, 16vw, 150px); font-weight: 700; color: var(--gold); line-height: 1; margin: 10px 0; }
+  #rank { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  #endmsg { opacity: .9; font-size: 18px; max-width: 480px; margin: 0 auto 26px; }
+
+  #streak { display: none; }
+  #streak.on { display: block; }
+
+  canvas#fx { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
+
+  @media (max-width: 560px) {
+    #choices { gap: 12px; padding-bottom: 20px; }
+    .hud-chip { font-size: 15px; padding: 6px 12px; }
+    #dots i { width: 10px; height: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="shade"></div>
+<canvas id="fx"></canvas>
+
+<!-- START -->
+<div class="screen active" id="start">
+  <h1><span class="a">Indonesia</span><br>or <span class="b">Kenya</span>?</h1>
+  <p>Ten landscapes. Two countries. Both sit on the equator, and they love to trick you. How many can you spot?</p>
+  <button class="big-btn" id="playBtn">Play</button>
+  <div class="legend">
+    <span class="pill" style="background:#2e9e63">Easy</span>
+    <span class="pill" style="background:#e09a1a">Medium</span>
+    <span class="pill" style="background:#d63b3b">Lookalikes</span>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game">
+  <div id="hud">
+    <div class="hud-chip" id="score">0 pts</div>
+    <div id="dots"></div>
+    <div class="hud-chip" id="level">Easy</div>
+  </div>
+  <div id="stage">
+    <div id="prompt">Where in the world is this?</div>
+  </div>
+  <div id="choices">
+    <button class="choice" id="ca">Indonesia<small>press A</small></button>
+    <button class="choice" id="cb">Kenya<small>press B</small></button>
+  </div>
+</div>
+
+<!-- REVEAL -->
+<div id="reveal">
+  <h2 id="verdict"></h2>
+  <div id="pts"></div>
+  <div id="place"></div>
+  <div id="fact"></div>
+  <button class="big-btn" id="nextBtn" style="font-size:20px;padding:12px 38px">Next</button>
+  <div id="credit"></div>
+</div>
+
+<!-- END -->
+<div class="screen" id="end">
+  <h2>Final score</h2>
+  <div id="final"></div>
+  <div id="rank"></div>
+  <p id="endmsg"></p>
+  <button class="big-btn" id="againBtn">Play again</button>
+</div>
+
+<script>
+/* =========================================================
+   EDIT YOUR PHOTOS HERE
+   Each "img" is a Wikimedia Commons file name. The page turns it
+   into a live image through Special:FilePath.
+   To swap a photo: go to commons.wikimedia.org, open any image,
+   copy the file name after "File:" and paste it as the img value.
+   You can also paste a full https link to any image of your own.
+   ========================================================= */
+const COMMONS = "https://commons.wikimedia.org/wiki/Special:FilePath/";
+const pic = f => f.startsWith("http") ? f : COMMONS + encodeURIComponent(f) + "?width=1800";
+
+const rounds = [
+  { level:"easy", answer:"A", img:"Sunrise on Mount Bromo.jpg",
+    fallback:["#3b2a4f","#e0795a"],
+    place:"Mount Bromo, East Java, Indonesia",
+    fact:"Bromo sits inside the Tengger caldera, and visitors hike up before dawn for this view." },
+
+  { level:"easy", answer:"B", img:"Wbeest Mara.jpg",
+    fallback:["#7a5a1c","#e8c46a"],
+    place:"Maasai Mara, Kenya",
+    fact:"The Great Migration brings over a million wildebeest across the Mara River each year." },
+
+  { level:"easy", answer:"A", img:"Borobudur-Nothwest-view.jpg",
+    fallback:["#27493a","#8fb89a"],
+    place:"Borobudur, Central Java, Indonesia",
+    fact:"It is the largest Buddhist temple in the world, built in the 9th century." },
+
+  { level:"easy", answer:"B", img:"Mount Kenya.jpg",
+    fallback:["#33506b","#a9c4dc"],
+    place:"Mount Kenya, Kenya",
+    fact:"The country is named after this mountain, and it sits almost exactly on the equator." },
+
+  { level:"medium", answer:"A", img:"Tegalalang Rice Terrace.jpg",
+    fallback:["#1f6b36","#8fd16a"],
+    place:"Tegalalang Rice Terraces, Bali, Indonesia",
+    fact:"The terraces follow the subak system, a water-sharing method over 1,000 years old." },
+
+  { level:"medium", answer:"B", img:"Lake Nakuru flamingos.jpg",
+    fallback:["#a8566f","#f2b6c6"],
+    place:"Lake Nakuru, Rift Valley, Kenya",
+    fact:"Flamingo numbers rise and fall with the lake's water level and algae." },
+
+  { level:"medium", answer:"A", img:"Raja Ampat.jpg",
+    fallback:["#0e6f86","#5fd3df"],
+    place:"Raja Ampat, West Papua, Indonesia",
+    fact:"It has more marine species than anywhere else on Earth." },
+
+  { level:"hard", answer:"A", img:"Bukit Wairinding-Sumba Timur.jpg",
+    fallback:["#8a6a1c","#e3c46a"],
+    place:"Wairinding Hills, Sumba, Indonesia",
+    fact:"Sumba's dry climate gives it African-style grassland, and it is famous for sandalwood ponies." },
+
+  { level:"hard", answer:"B", img:"Diani Beach.jpg",
+    fallback:["#0f8a8a","#7fe0d4"],
+    place:"Diani Beach, South Coast, Kenya",
+    fact:"A coral reef protects this coast, and colobus monkeys live in the nearby forest." },
+
+  { level:"hard", answer:"B", img:"Kericho tea plantation.jpg",
+    fallback:["#1d5e34","#74c27f"],
+    place:"Kericho Tea Plantations, Kenya",
+    fact:"Kericho gets rain almost year round, and tea is among Kenya's biggest exports." }
+];
+
+const $ = id => document.getElementById(id);
+let cur = 0, score = 0, streak = 0, locked = true, results = [], roundStart = 0;
+
+/* ---------- sound (tiny synth beeps, no files needed) ---------- */
+let actx;
+function beep(freqs, dur = .12, type = "sine", vol = .12) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    freqs.forEach((f, i) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.value = f; g.gain.value = vol;
+      o.connect(g); g.connect(actx.destination);
+      const t = actx.currentTime + i * dur;
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+      o.start(t); o.stop(t + dur);
+    });
+  } catch (e) {}
+}
+
+/* ---------- confetti ---------- */
+const cv = $("fx"), cx = cv.getContext("2d"); let bits = [];
+function sizeCv() { cv.width = innerWidth; cv.height = innerHeight; }
+addEventListener("resize", sizeCv); sizeCv();
+function confetti(n = 120) {
+  const cols = ["#ffd166","#e8473b","#1fa971","#fff","#5fd3df"];
+  for (let i = 0; i < n; i++) bits.push({
+    x: innerWidth / 2, y: innerHeight * .55, vx: (Math.random() - .5) * 16, vy: -Math.random() * 16 - 4,
+    s: Math.random() * 8 + 4, c: cols[i % cols.length], r: Math.random() * 6, vr: (Math.random() - .5) * .4, life: 120
+  });
+  if (bits.length === n) tick();
+}
+function tick() {
+  cx.clearRect(0, 0, cv.width, cv.height);
+  bits.forEach(b => {
+    b.vy += .5; b.x += b.vx; b.y += b.vy; b.r += b.vr; b.life--;
+    cx.save(); cx.translate(b.x, b.y); cx.rotate(b.r); cx.fillStyle = b.c;
+    cx.fillRect(-b.s / 2, -b.s / 2, b.s, b.s * .6); cx.restore();
+  });
+  bits = bits.filter(b => b.life > 0 && b.y < innerHeight + 30);
+  if (bits.length) requestAnimationFrame(tick); else cx.clearRect(0, 0, cv.width, cv.height);
+}
+
+/* ---------- screens ---------- */
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  $(id).classList.add("active");
+}
+
+function setBg(r) {
+  const bg = $("bg");
+  bg.classList.remove("zoom");
+  bg.style.opacity = 0;
+  bg.style.backgroundImage = `linear-gradient(160deg, ${r.fallback[0]}, ${r.fallback[1]})`;
+  const im = new Image();
+  im.onload = () => {
+    bg.style.backgroundImage = `url("${im.src}")`;
+    bg.style.opacity = 1; void bg.offsetWidth; bg.classList.add("zoom");
+  };
+  im.onerror = () => { bg.style.opacity = 1; };
+  im.src = pic(r.img);
+  setTimeout(() => { bg.style.opacity = 1; }, 1500);
+}
+
+function buildDots() {
+  $("dots").innerHTML = rounds.map(() => "<i></i>").join("");
+}
+function paintDots() {
+  [...$("dots").children].forEach((d, i) => {
+    d.className = i === cur ? "now" : results[i] === true ? "right" : results[i] === false ? "wrong" : "";
+  });
+}
+
+function loadRound() {
+  const r = rounds[cur];
+  locked = false; roundStart = Date.now();
+  setBg(r);
+  const lv = $("level"); lv.className = "hud-chip " + r.level;
+  lv.textContent = r.level === "hard" ? "Lookalike" : r.level[0].toUpperCase() + r.level.slice(1);
+  $("score").textContent = score + " pts";
+  $("prompt").textContent = r.level === "hard" ? "Careful... this one is tricky" : "Where in the world is this?";
+  ["ca", "cb"].forEach(id => { $(id).disabled = false; $(id).className = "choice"; });
+  $("reveal").classList.remove("show");
+  paintDots();
+}
+
+function choose(letter) {
+  if (locked) return; locked = true;
+  const r = rounds[cur], ok = letter === r.answer;
+  const secs = (Date.now() - roundStart) / 1000;
+  let gained = 0;
+  if (ok) {
+    streak++;
+    const base = r.level === "easy" ? 100 : r.level === "medium" ? 150 : 250;
+    const speed = Math.max(0, Math.round((10 - secs) * 5));
+    const combo = Math.min(streak - 1, 5) * 20;
+    gained = base + speed + combo; score += gained;
+    beep([523, 659, 784]); confetti(r.level === "hard" ? 200 : 110);
+  } else {
+    streak = 0; beep([220, 165], .18, "sawtooth", .08);
+    $("c" + letter.toLowerCase()).classList.add("shake");
+  }
+  results[cur] = ok;
+  ["ca", "cb"].forEach(id => $(id).disabled = true);
+  const winId = "c" + r.answer.toLowerCase();
+  $(winId).classList.add("win");
+  ["ca", "cb"].forEach(id => { if (id !== winId) $(id).classList.add("dim"); });
+
+  $("score").textContent = score + " pts";
+  $("verdict").textContent = ok ? "Correct!" : "Not quite!";
+  $("verdict").className = ok ? "good" : "bad";
+  $("pts").textContent = ok ? `+${gained} pts` + (streak > 1 ? `  |  ${streak} in a row` : "") : "";
+  $("place").textContent = r.place;
+  $("fact").textContent = r.fact;
+  $("credit").textContent = "Photo: Wikimedia Commons contributors";
+  $("nextBtn").textContent = cur === rounds.length - 1 ? "See results" : "Next round";
+  paintDots();
+  setTimeout(() => $("reveal").classList.add("show"), 450);
+}
+
+function next() {
+  cur++;
+  if (cur >= rounds.length) return finish();
+  loadRound();
+}
+
+function finish() {
+  $("reveal").classList.remove("show");
+  const right = results.filter(Boolean).length;
+  $("final").textContent = score;
+  let rank, msg;
+  if (right >= 9) { rank = "Equator Expert"; msg = "You saw straight through the lookalikes. Impressive."; }
+  else if (right >= 7) { rank = "Seasoned Traveller"; msg = "Only a couple of sneaky ones got past you."; }
+  else if (right >= 5) { rank = "Curious Explorer"; msg = "Not bad at all. The lookalikes fool almost everyone."; }
+  else { rank = "Beginner Backpacker"; msg = "The equator tricked you this time. Time for a rematch."; }
+  $("rank").textContent = `${rank}  (${right}/10 correct)`;
+  $("endmsg").textContent = msg;
+  show("end"); confetti(right >= 7 ? 260 : 60); beep([523, 659, 784, 1047], .14);
+}
+
+function start() {
+  cur = 0; score = 0; streak = 0; results = [];
+  buildDots(); show("game"); loadRound();
+}
+
+$("playBtn").onclick = start;
+$("againBtn").onclick = start;
+$("ca").onclick = () => choose("A");
+$("cb").onclick = () => choose("B");
+$("nextBtn").onclick = next;
+addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  if ($("game").classList.contains("active")) {
+    if (k === "a" || e.key === "ArrowLeft") choose("A");
+    if (k === "b" || e.key === "ArrowRight") choose("B");
+  }
+  if ((k === "enter" || k === " ") && locked && $("reveal").classList.contains("show")) { e.preventDefault(); next(); }
+  if (k === "enter" && $("start").classList.contains("active")) start();
+});
+
+/* preload start-screen backdrop with the first round photo */
+setBg(rounds[0]);
+</script>
+</body>
+</html>
