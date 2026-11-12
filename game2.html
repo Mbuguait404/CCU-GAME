@@ -6,123 +6,86 @@
 <title>Indonesia or Kenya? The Landscape Game</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --red: #e8473b; --green: #1fa971; --gold: #ffd166; --ink: #0d1b2a;
-    --card: rgba(13,27,42,.62);
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; margin: 0; }
-  body {
-    font-family: 'Fredoka', system-ui, sans-serif; color: #fff; overflow: hidden;
-    background: var(--ink);
-  }
+  :root { --red:#e8473b; --green:#1fa971; --gold:#ffd166; --ink:#0d1b2a; --card:rgba(13,27,42,.62); }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; margin:0; }
+  body { font-family:'Fredoka',system-ui,sans-serif; color:#fff; overflow:hidden; background:var(--ink); }
 
-  /* Full-screen photo background with slow zoom */
-  #bg {
-    position: fixed; inset: 0; background-size: cover; background-position: center;
-    transform: scale(1.05); transition: opacity .6s ease, transform 12s ease-out;
-    z-index: 0;
-  }
-  #bg.zoom { transform: scale(1.18); }
-  #shade {
-    position: fixed; inset: 0; z-index: 1;
-    background: linear-gradient(to bottom, rgba(13,27,42,.75) 0%, rgba(13,27,42,.05) 35%, rgba(13,27,42,.05) 55%, rgba(13,27,42,.9) 100%);
-  }
+  #bg { position:fixed; inset:0; background-size:cover; background-position:center;
+        transform:scale(1.05); transition:opacity .6s ease, transform 12s ease-out; z-index:0; }
+  #bg.zoom { transform:scale(1.18); }
+  #shade { position:fixed; inset:0; z-index:1;
+    background:linear-gradient(to bottom, rgba(13,27,42,.75) 0%, rgba(13,27,42,.05) 35%, rgba(13,27,42,.05) 55%, rgba(13,27,42,.92) 100%); }
 
-  .screen { position: fixed; inset: 0; z-index: 2; display: none; flex-direction: column; }
-  .screen.active { display: flex; }
+  .screen { position:fixed; inset:0; z-index:2; display:none; flex-direction:column; }
+  .screen.active { display:flex; }
 
-  /* START SCREEN */
-  #start { align-items: center; justify-content: center; text-align: center; padding: 24px; }
-  #start h1 {
-    font-size: clamp(40px, 8vw, 86px); margin: 0; line-height: 1; text-shadow: 0 6px 30px rgba(0,0,0,.5);
-  }
-  #start h1 span.a { color: var(--red); }
-  #start h1 span.b { color: var(--green); }
-  #start p { font-size: clamp(16px, 2.4vw, 24px); max-width: 560px; margin: 18px 0 30px; opacity: .92; }
-  .big-btn {
-    font-family: inherit; font-size: 26px; font-weight: 700; color: var(--ink);
-    background: var(--gold); border: 0; border-radius: 999px; padding: 16px 48px; cursor: pointer;
-    box-shadow: 0 8px 0 #c99a2e, 0 18px 30px rgba(0,0,0,.4);
-    transition: transform .1s, box-shadow .1s;
-  }
-  .big-btn:hover { transform: translateY(-2px); }
-  .big-btn:active { transform: translateY(6px); box-shadow: 0 2px 0 #c99a2e; }
-  .legend { display: flex; gap: 12px; margin-top: 26px; font-size: 14px; opacity: .9; }
-  .pill { padding: 6px 14px; border-radius: 999px; font-weight: 600; }
+  #start { align-items:center; justify-content:center; text-align:center; padding:24px; }
+  #start h1 { font-size:clamp(40px,8vw,86px); margin:0; line-height:1; text-shadow:0 6px 30px rgba(0,0,0,.5); }
+  #start h1 .a { color:var(--red); } #start h1 .b { color:var(--green); }
+  #start p { font-size:clamp(16px,2.4vw,24px); max-width:580px; margin:18px 0 28px; opacity:.92; }
+  .big-btn { font-family:inherit; font-size:26px; font-weight:700; color:var(--ink); background:var(--gold);
+    border:0; border-radius:999px; padding:16px 48px; cursor:pointer;
+    box-shadow:0 8px 0 #c99a2e, 0 18px 30px rgba(0,0,0,.4); transition:transform .1s, box-shadow .1s; }
+  .big-btn:hover { transform:translateY(-2px); }
+  .big-btn:active { transform:translateY(6px); box-shadow:0 2px 0 #c99a2e; }
+  .legend { display:flex; gap:10px; margin-top:24px; font-size:14px; flex-wrap:wrap; justify-content:center; }
+  .pill { padding:6px 14px; border-radius:999px; font-weight:600; }
+  #bankInfo { margin-top:14px; font-size:13px; opacity:.7; }
 
-  /* GAME HUD */
-  #hud {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 16px 22px;
-  }
-  .hud-chip {
-    background: var(--card); backdrop-filter: blur(8px); border-radius: 999px;
-    padding: 8px 18px; font-weight: 700; font-size: 18px;
-  }
-  #level.easy { background: #2e9e63; } #level.medium { background: #e09a1a; } #level.hard { background: #d63b3b; }
-  #dots { display: flex; gap: 6px; }
-  #dots i { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.28); transition: .3s; }
-  #dots i.now { background: #fff; transform: scale(1.25); }
-  #dots i.right { background: var(--green); } #dots i.wrong { background: var(--red); }
+  #hud { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 22px; }
+  .hud-chip { background:var(--card); backdrop-filter:blur(8px); border-radius:999px; padding:8px 18px; font-weight:700; font-size:18px; }
+  #level.easy { background:#2e9e63; } #level.medium { background:#e09a1a; } #level.hard { background:#d63b3b; }
+  #dots { display:flex; gap:6px; }
+  #dots i { width:14px; height:14px; border-radius:50%; background:rgba(255,255,255,.28); transition:.3s; }
+  #dots i.now { background:#fff; transform:scale(1.25); }
+  #dots i.right { background:var(--green); } #dots i.wrong { background:var(--red); }
 
-  #stage { flex: 1; display: flex; align-items: flex-end; justify-content: center; padding: 0 20px; }
-  #prompt {
-    font-size: clamp(20px, 3.4vw, 34px); font-weight: 700; text-align: center; margin-bottom: 18px;
-    text-shadow: 0 4px 18px rgba(0,0,0,.7);
-  }
+  #stage { flex:1; display:flex; align-items:flex-end; justify-content:center; padding:0 20px; }
+  #prompt { font-size:clamp(20px,3.4vw,34px); font-weight:700; text-align:center; margin-bottom:18px; text-shadow:0 4px 18px rgba(0,0,0,.7); }
 
-  #choices { display: flex; gap: 18px; padding: 0 22px 28px; }
-  .choice {
-    flex: 1; font-family: inherit; border: 0; border-radius: 22px; color: #fff; cursor: pointer;
-    padding: 20px 10px; font-size: clamp(20px, 3.2vw, 32px); font-weight: 700;
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    transition: transform .12s, filter .2s, opacity .3s;
-  }
-  .choice small { font-size: 14px; opacity: .85; font-weight: 600; }
-  #ca { background: linear-gradient(160deg, #ff6b5e, #c9302a); box-shadow: 0 8px 0 #8f1f1a, 0 16px 28px rgba(0,0,0,.45); }
-  #cb { background: linear-gradient(160deg, #2fd18f, #138a5b); box-shadow: 0 8px 0 #0b5c3b, 0 16px 28px rgba(0,0,0,.45); }
-  .choice:hover:not(:disabled) { transform: translateY(-4px); filter: brightness(1.08); }
-  .choice:active:not(:disabled) { transform: translateY(5px); }
-  .choice:disabled { cursor: default; }
-  .choice.dim { opacity: .35; filter: grayscale(.6); }
-  .choice.win { animation: pop .5s ease; outline: 5px solid var(--gold); }
+  #choices { display:flex; gap:18px; padding:0 22px 28px; }
+  .choice { flex:1; font-family:inherit; border:0; border-radius:22px; color:#fff; cursor:pointer;
+    padding:20px 10px; font-size:clamp(20px,3.2vw,32px); font-weight:700; display:flex; flex-direction:column;
+    align-items:center; gap:2px; transition:transform .12s, filter .2s, opacity .3s; }
+  .choice small { font-size:14px; opacity:.85; font-weight:600; }
+  #ca { background:linear-gradient(160deg,#ff6b5e,#c9302a); box-shadow:0 8px 0 #8f1f1a, 0 16px 28px rgba(0,0,0,.45); }
+  #cb { background:linear-gradient(160deg,#2fd18f,#138a5b); box-shadow:0 8px 0 #0b5c3b, 0 16px 28px rgba(0,0,0,.45); }
+  .choice:hover:not(:disabled) { transform:translateY(-4px); filter:brightness(1.08); }
+  .choice:active:not(:disabled) { transform:translateY(5px); }
+  .choice:disabled { cursor:default; }
+  .choice.dim { opacity:.35; filter:grayscale(.6); }
+  .choice.win { animation:pop .5s ease; outline:5px solid var(--gold); }
   @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.07)} 100%{transform:scale(1)} }
   @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
-  .shake { animation: shake .35s; }
+  .shake { animation:shake .35s; }
 
-  /* REVEAL PANEL */
-  #reveal {
-    position: fixed; left: 50%; bottom: 0; z-index: 5; width: min(680px, 100%);
-    transform: translate(-50%, 110%); transition: transform .45s cubic-bezier(.2,.9,.3,1.2);
-    background: rgba(13,27,42,.94); backdrop-filter: blur(12px);
-    border-radius: 28px 28px 0 0; padding: 26px 26px 28px; text-align: center;
-    box-shadow: 0 -20px 50px rgba(0,0,0,.5);
-  }
-  #reveal.show { transform: translate(-50%, 0); }
-  #verdict { font-size: 38px; font-weight: 700; margin: 0; }
-  #verdict.good { color: #52e6a0; } #verdict.bad { color: #ff7d71; }
-  #pts { color: var(--gold); font-weight: 700; margin: 2px 0 10px; font-size: 18px; min-height: 24px; }
-  #place { font-size: 22px; font-weight: 700; }
-  #fact { margin: 8px 0 18px; opacity: .88; font-size: 17px; line-height: 1.4; }
-  #credit { font-size: 11px; opacity: .45; margin-top: 12px; }
+  #reveal { position:fixed; left:50%; bottom:0; z-index:5; width:min(680px,100%);
+    transform:translate(-50%,110%); transition:transform .45s cubic-bezier(.2,.9,.3,1.2);
+    background:rgba(13,27,42,.95); backdrop-filter:blur(12px); border-radius:28px 28px 0 0;
+    padding:26px 26px 28px; text-align:center; box-shadow:0 -20px 50px rgba(0,0,0,.5); }
+  #reveal.show { transform:translate(-50%,0); }
+  #verdict { font-size:38px; font-weight:700; margin:0; }
+  #verdict.good { color:#52e6a0; } #verdict.bad { color:#ff7d71; }
+  #pts { color:var(--gold); font-weight:700; margin:2px 0 8px; font-size:18px; min-height:24px; }
+  #tag { display:inline-block; font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    background:rgba(255,255,255,.12); padding:4px 12px; border-radius:999px; margin-bottom:8px; }
+  #place { font-size:22px; font-weight:700; }
+  #fact { margin:8px 0 18px; opacity:.88; font-size:17px; line-height:1.4; }
+  #credit { font-size:11px; opacity:.45; margin-top:12px; }
 
-  /* END SCREEN */
-  #end { align-items: center; justify-content: center; text-align: center; padding: 24px; }
-  #end h2 { font-size: clamp(30px, 6vw, 56px); margin: 0; }
-  #final { font-size: clamp(70px, 16vw, 150px); font-weight: 700; color: var(--gold); line-height: 1; margin: 10px 0; }
-  #rank { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
-  #endmsg { opacity: .9; font-size: 18px; max-width: 480px; margin: 0 auto 26px; }
+  #end { align-items:center; justify-content:center; text-align:center; padding:24px; }
+  #end h2 { font-size:clamp(30px,6vw,56px); margin:0; }
+  #final { font-size:clamp(70px,16vw,150px); font-weight:700; color:var(--gold); line-height:1; margin:10px 0; }
+  #rank { font-size:26px; font-weight:700; margin-bottom:6px; }
+  #endmsg { opacity:.9; font-size:18px; max-width:520px; margin:0 auto 14px; }
+  #fooled { font-size:15px; opacity:.8; max-width:520px; margin:0 auto 24px; }
 
-  #streak { display: none; }
-  #streak.on { display: block; }
-
-  canvas#fx { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
-
-  @media (max-width: 560px) {
-    #choices { gap: 12px; padding-bottom: 20px; }
-    .hud-chip { font-size: 15px; padding: 6px 12px; }
-    #dots i { width: 10px; height: 10px; }
+  canvas#fx { position:fixed; inset:0; z-index:9; pointer-events:none; }
+  @media (max-width:560px) {
+    #choices { gap:12px; padding-bottom:20px; }
+    .hud-chip { font-size:15px; padding:6px 12px; }
+    #dots i { width:10px; height:10px; }
   }
 </style>
 </head>
@@ -132,228 +95,294 @@
 <div id="shade"></div>
 <canvas id="fx"></canvas>
 
-<!-- START -->
 <div class="screen active" id="start">
   <h1><span class="a">Indonesia</span><br>or <span class="b">Kenya</span>?</h1>
-  <p>Ten landscapes. Two countries. Both sit on the equator, and they love to trick you. How many can you spot?</p>
+  <p>Ten landscapes drawn at random. Beaches, volcanoes, savanna, cities, lakes and more. Both countries love to trick you, so trust your eyes, not your stereotypes.</p>
   <button class="big-btn" id="playBtn">Play</button>
   <div class="legend">
-    <span class="pill" style="background:#2e9e63">Easy</span>
-    <span class="pill" style="background:#e09a1a">Medium</span>
-    <span class="pill" style="background:#d63b3b">Lookalikes</span>
+    <span class="pill" style="background:#2e9e63">Easy: the classics</span>
+    <span class="pill" style="background:#e09a1a">Medium: less obvious</span>
+    <span class="pill" style="background:#d63b3b">Lookalikes: the traps</span>
   </div>
+  <div id="bankInfo"></div>
 </div>
 
-<!-- GAME -->
 <div class="screen" id="game">
   <div id="hud">
     <div class="hud-chip" id="score">0 pts</div>
     <div id="dots"></div>
     <div class="hud-chip" id="level">Easy</div>
   </div>
-  <div id="stage">
-    <div id="prompt">Where in the world is this?</div>
-  </div>
+  <div id="stage"><div id="prompt">Where in the world is this?</div></div>
   <div id="choices">
     <button class="choice" id="ca">Indonesia<small>press A</small></button>
     <button class="choice" id="cb">Kenya<small>press B</small></button>
   </div>
 </div>
 
-<!-- REVEAL -->
 <div id="reveal">
   <h2 id="verdict"></h2>
   <div id="pts"></div>
+  <div id="tag"></div>
   <div id="place"></div>
   <div id="fact"></div>
   <button class="big-btn" id="nextBtn" style="font-size:20px;padding:12px 38px">Next</button>
   <div id="credit"></div>
 </div>
 
-<!-- END -->
 <div class="screen" id="end">
   <h2>Final score</h2>
   <div id="final"></div>
   <div id="rank"></div>
   <p id="endmsg"></p>
-  <button class="big-btn" id="againBtn">Play again</button>
+  <p id="fooled"></p>
+  <button class="big-btn" id="againBtn">Play again with new scenes</button>
 </div>
 
 <script>
-/* =========================================================
-   EDIT YOUR PHOTOS HERE
-   Each "img" is a Wikimedia Commons file name. The page turns it
-   into a live image through Special:FilePath.
-   To swap a photo: go to commons.wikimedia.org, open any image,
-   copy the file name after "File:" and paste it as the img value.
-   You can also paste a full https link to any image of your own.
-   ========================================================= */
-const COMMONS = "https://commons.wikimedia.org/wiki/Special:FilePath/";
-const pic = f => f.startsWith("http") ? f : COMMONS + encodeURIComponent(f) + "?width=1800";
+/* =====================================================================
+   THE SCENE BANK
+   Every scene has:
+     c     = correct country: "ID" (Indonesia) or "KE" (Kenya)
+     d     = difficulty: 1 easy, 2 medium, 3 lookalike trap
+     tag   = what the scene plays on (shown in the reveal)
+     img   = Wikimedia Commons file name (or a full https image link)
+     g     = fallback gradient colors if the photo fails to load
+     place, fact = shown after the answer
 
-const rounds = [
-  { level:"easy", answer:"A", img:"Sunrise on Mount Bromo.jpg",
-    fallback:["#3b2a4f","#e0795a"],
-    place:"Mount Bromo, East Java, Indonesia",
-    fact:"Bromo sits inside the Tengger caldera, and visitors hike up before dawn for this view." },
+   HOW TO ADD OR FIX A PHOTO:
+   Open commons.wikimedia.org, find the picture, copy the file name
+   after "File:" and paste it as img. You can add as many scenes as
+   you like. The game draws 10 at random each time.
+   Photos marked "verified" below came straight from search results.
+   Others are best guesses: if one shows a colored gradient instead of
+   a photo, just swap its img value.
+   ===================================================================== */
+const BANK = [
+ /* ------------------- INDONESIA: EASY (the classics) ------------------- */
+ { c:"ID", d:1, tag:"Volcano", img:"Sunrise on Mount Bromo.jpg", g:["#3b2a4f","#e0795a"],
+   place:"Mount Bromo, East Java", fact:"Bromo sits inside the Tengger caldera, and visitors hike up before dawn for this view." },
+ { c:"ID", d:1, tag:"Temple", img:"Borobudur-Nothwest-view.jpg", g:["#27493a","#8fb89a"],
+   place:"Borobudur, Central Java", fact:"It is the largest Buddhist temple in the world, built in the 9th century." },
+ { c:"ID", d:1, tag:"Rice terraces", img:"Tegalalang Rice Terrace.jpg", g:["#1f6b36","#8fd16a"],
+   place:"Tegalalang, Bali", fact:"The terraces follow the subak system, a water-sharing method over 1,000 years old." },
+ { c:"ID", d:1, tag:"Tropical islands", img:"Landscape of Raja Ampat; January 2016.jpg", g:["#0e6f86","#5fd3df"],
+   place:"Raja Ampat, West Papua", fact:"It has more marine species than anywhere else on Earth." },
+ { c:"ID", d:1, tag:"Beach", img:"Beautiful Sunset at Kesirat Beach.jpg", g:["#7a3b5a","#f0a35e"],
+   place:"Kesirat Beach, Indonesia", fact:"Indonesia has over 17,000 islands, so the coastline is almost endless." },
+ { c:"ID", d:1, tag:"Skyline", img:"Jakarta skyline.jpg", g:["#24324a","#7b93b8"],
+   place:"Jakarta skyline", fact:"Jakarta is one of the largest urban areas on Earth, home to over 10 million people in the city itself." },
 
-  { level:"easy", answer:"B", img:"Wbeest Mara.jpg",
-    fallback:["#7a5a1c","#e8c46a"],
-    place:"Maasai Mara, Kenya",
-    fact:"The Great Migration brings over a million wildebeest across the Mara River each year." },
+ /* ------------------- INDONESIA: MEDIUM ------------------- */
+ { c:"ID", d:2, tag:"Crater lake", img:"Kelimutu.jpg", g:["#1c6a6a","#7fd6c9"],
+   place:"Kelimutu, Flores", fact:"The three crater lakes change color over the years because of volcanic gases." },
+ { c:"ID", d:2, tag:"Tea hills", img:"Landskap kebun teh Wonosari.jpg", g:["#1d5e34","#74c27f"],
+   place:"Wonosari tea gardens, East Java", fact:"Java's highlands grow tea in rows almost identical to those in East Africa." },
+ { c:"ID", d:2, tag:"Jungle", img:"Foto Hutan Papua Yang Rusak (10202).jpg", g:["#173d24","#4f9a5f"],
+   place:"Papua rainforest", fact:"Papua holds one of the largest remaining tropical rainforests in the world." },
+ { c:"ID", d:2, tag:"Highlands", img:"Lanskap Gunung Gede Cianjur.jpg", g:["#2d5a45","#9cc7a8"],
+   place:"Mount Gede, West Java", fact:"Mount Gede Pangrango National Park is one of Indonesia's oldest protected areas." },
+ { c:"ID", d:2, tag:"Island view", img:"Lombok Island viewed from Gili Trawangan.jpg", g:["#1b7a8c","#8fe0e8"],
+   place:"Lombok from Gili Trawangan", fact:"The Gili islands have no motorized vehicles, only bikes and horse carts." },
+ { c:"ID", d:2, tag:"Cityscape", img:"Bandung skyline.jpg", g:["#3a3f5c","#a3a8cf"],
+   place:"Bandung, West Java", fact:"Bandung sits in a highland basin, so it is cooler than most Indonesian cities." },
 
-  { level:"easy", answer:"A", img:"Borobudur-Nothwest-view.jpg",
-    fallback:["#27493a","#8fb89a"],
-    place:"Borobudur, Central Java, Indonesia",
-    fact:"It is the largest Buddhist temple in the world, built in the 9th century." },
+ /* ------------------- INDONESIA: LOOKALIKES (look like Kenya) ------------------- */
+ { c:"ID", d:3, tag:"Looks like savanna", img:"Bukit Wairinding-Sumba Timur.jpg", g:["#8a6a1c","#e3c46a"],
+   place:"Wairinding Hills, Sumba", fact:"Sumba's dry climate gives it African-style grassland, and it is famous for sandalwood ponies." },
+ { c:"ID", d:3, tag:"Looks like savanna", img:"Padang Rumput dan Kuda Sandalwood.jpg", g:["#9a7b2c","#e8cf85"],
+   place:"Sumba grassland with sandalwood horses", fact:"Sandalwood ponies roam open grassland that could pass for the Serengeti." },
+ { c:"ID", d:3, tag:"Looks like savanna", img:"Liarnya keindahan Sumba.jpg", g:["#a0842f","#ecd89a"],
+   place:"Sumba, East Nusa Tenggara", fact:"Sumba is one of Indonesia's driest islands, with a long dry season." },
+ { c:"ID", d:3, tag:"Looks like savanna", img:"Gersang Sabana.jpg", g:["#8d6f25","#dfc17a"],
+   place:"Dry savanna, Indonesia", fact:"Several Indonesian parks, such as Baluran in East Java, are nicknamed Little Africa." },
+ { c:"ID", d:3, tag:"Looks like savanna", img:"Oro Oro Ombo.jpg", g:["#6f8a3a","#cddf8f"],
+   place:"Oro-oro Ombo, Mount Semeru", fact:"This golden grassland sits at the foot of Java's highest volcano." },
+ { c:"ID", d:3, tag:"Looks like Rift Valley", img:"Padang Sabana.jpg", g:["#8a7a35","#dccb85"],
+   place:"Open savanna, Indonesia", fact:"Wide grass plains with scattered trees are rare in Indonesia, which is why they fool people." },
 
-  { level:"easy", answer:"B", img:"Mount Kenya.jpg",
-    fallback:["#33506b","#a9c4dc"],
-    place:"Mount Kenya, Kenya",
-    fact:"The country is named after this mountain, and it sits almost exactly on the equator." },
+ /* ------------------- KENYA: EASY (the classics) ------------------- */
+ { c:"KE", d:1, tag:"Wildlife", img:"Wbeest Mara.jpg", g:["#7a5a1c","#e8c46a"],
+   place:"Maasai Mara", fact:"The Great Migration brings over a million wildebeest across the Mara River each year." },
+ { c:"KE", d:1, tag:"Savanna", img:"Maasai Mara savanna landscape, Kenya.jpg", g:["#8a6a2a","#ecd28c"],
+   place:"Maasai Mara savanna", fact:"The Mara is the northern end of the Serengeti ecosystem." },
+ { c:"KE", d:1, tag:"Wildlife", img:"Fred the elephant walking away into savanna, Northern Mara, Kenya.jpg", g:["#7c6030","#d9bb78"],
+   place:"Northern Mara, Kenya", fact:"Kenya is home to some of the largest elephant populations in Africa." },
+ { c:"KE", d:1, tag:"Mountain", img:"Early morning view of Mt. Kenya's peaks, from an altitude of 4,290 meters (14,075 ft) (15850536024).jpg", g:["#33506b","#a9c4dc"],
+   place:"Mount Kenya", fact:"The country is named after this mountain, and it sits almost exactly on the equator." },
+ { c:"KE", d:1, tag:"Wildlife", img:"Four wildebeests in Maasai Mara, Kenya.jpg", g:["#7a5e24","#dcc27f"],
+   place:"Maasai Mara", fact:"Wildebeest travel in huge herds, following the rains across the plains." },
+ { c:"KE", d:1, tag:"Lake and flamingos", img:"Lake Nakuru flamingos.jpg", g:["#a8566f","#f2b6c6"],
+   place:"Lake Nakuru, Rift Valley", fact:"Flamingo numbers rise and fall with the lake's water level and algae." },
 
-  { level:"medium", answer:"A", img:"Tegalalang Rice Terrace.jpg",
-    fallback:["#1f6b36","#8fd16a"],
-    place:"Tegalalang Rice Terraces, Bali, Indonesia",
-    fact:"The terraces follow the subak system, a water-sharing method over 1,000 years old." },
+ /* ------------------- KENYA: MEDIUM ------------------- */
+ { c:"KE", d:2, tag:"Arid country", img:"Arid landscape with acacia tree, Samburu National Reserve, Kenya.jpg", g:["#9a6b3a","#e3b87a"],
+   place:"Samburu National Reserve", fact:"Samburu's dry north is home to species you will not find in the Mara, like the Grevy's zebra." },
+ { c:"KE", d:2, tag:"Arid country", img:"Landscape with pyramid mountain and dirt road, Samburu National Reserve, Kenya.jpg", g:["#8d5f3a","#dba878"],
+   place:"Samburu, northern Kenya", fact:"Northern Kenya is semi-desert, a very different world from the green highlands." },
+ { c:"KE", d:2, tag:"Wildlife", img:"Landscape with mountain and impala herd in Samburu National Reserve, Kenya.jpg", g:["#7d6a3a","#d8c488"],
+   place:"Samburu National Reserve", fact:"Impala can leap up to 3 meters high and 10 meters long." },
+ { c:"KE", d:2, tag:"Highlands", img:"FROM THE HILL TOPS OF NGONG.JPG", g:["#4d7a4a","#a8d19a"],
+   place:"Ngong Hills, near Nairobi", fact:"The Ngong Hills overlook the Rift Valley and are a popular hiking spot." },
+ { c:"KE", d:2, tag:"Alpine lake", img:"Ansicht Lake Michaelson im Mount Kenya Nationalpark (54244787631).jpg", g:["#3f6a7a","#9fcbd6"],
+   place:"Lake Michaelson, Mount Kenya", fact:"Glacial lakes sit high on Mount Kenya, surrounded by giant lobelias." },
+ { c:"KE", d:2, tag:"Dry riverbed", img:"ENTASOPIA DRY RIVER BED LANDSCAPE.jpg", g:["#a07a4a","#e8c698"],
+   place:"Entasopia, Kenya", fact:"Many Kenyan rivers run dry for months and then flood after heavy rain." },
 
-  { level:"medium", answer:"B", img:"Lake Nakuru flamingos.jpg",
-    fallback:["#a8566f","#f2b6c6"],
-    place:"Lake Nakuru, Rift Valley, Kenya",
-    fact:"Flamingo numbers rise and fall with the lake's water level and algae." },
-
-  { level:"medium", answer:"A", img:"Raja Ampat.jpg",
-    fallback:["#0e6f86","#5fd3df"],
-    place:"Raja Ampat, West Papua, Indonesia",
-    fact:"It has more marine species than anywhere else on Earth." },
-
-  { level:"hard", answer:"A", img:"Bukit Wairinding-Sumba Timur.jpg",
-    fallback:["#8a6a1c","#e3c46a"],
-    place:"Wairinding Hills, Sumba, Indonesia",
-    fact:"Sumba's dry climate gives it African-style grassland, and it is famous for sandalwood ponies." },
-
-  { level:"hard", answer:"B", img:"Diani Beach.jpg",
-    fallback:["#0f8a8a","#7fe0d4"],
-    place:"Diani Beach, South Coast, Kenya",
-    fact:"A coral reef protects this coast, and colobus monkeys live in the nearby forest." },
-
-  { level:"hard", answer:"B", img:"Kericho tea plantation.jpg",
-    fallback:["#1d5e34","#74c27f"],
-    place:"Kericho Tea Plantations, Kenya",
-    fact:"Kericho gets rain almost year round, and tea is among Kenya's biggest exports." }
+ /* ------------------- KENYA: LOOKALIKES (look like Indonesia) ------------------- */
+ { c:"KE", d:3, tag:"Looks like Java", img:"Kericho tea plantation.jpg", g:["#1d5e34","#74c27f"],
+   place:"Kericho tea plantations", fact:"Kericho gets rain almost year round, and tea is among Kenya's biggest exports." },
+ { c:"KE", d:3, tag:"Looks like Bali", img:"Diani Beach.jpg", g:["#0f8a8a","#7fe0d4"],
+   place:"Diani Beach, South Coast", fact:"A coral reef protects this coast, and colobus monkeys live in the nearby forest." },
+ { c:"KE", d:3, tag:"Looks like Indonesian port", img:"Lamu Old Town.jpg", g:["#7a6a52","#e3d2a8"],
+   place:"Lamu Old Town", fact:"Lamu is a UNESCO World Heritage Site and one of the oldest Swahili settlements." },
+ { c:"KE", d:3, tag:"Looks like a tropical coast", img:"Watamu beach.jpg", g:["#1b8a94","#8fe3e0"],
+   place:"Watamu, Kenyan coast", fact:"Watamu has coral gardens and nesting sea turtles." },
+ { c:"KE", d:3, tag:"Looks like Asian skyline", img:"Nairobi skyline.jpg", g:["#2b3a55","#8aa0c4"],
+   place:"Nairobi skyline", fact:"Nairobi is the only capital in the world with a national park inside its city limits." },
+ { c:"KE", d:3, tag:"Looks like Indonesia's rainforest", img:"Kakamega Forest.jpg", g:["#16402a","#4f9a60"],
+   place:"Kakamega Forest, western Kenya", fact:"It is the last remnant of the ancient rainforest that once stretched across Africa." },
+ { c:"KE", d:3, tag:"Looks like a volcano crater", img:"Menengai Crater.jpg", g:["#5a4a3a","#b8a48a"],
+   place:"Menengai Crater, Nakuru", fact:"It is one of the largest volcanic calderas in the world." },
+ { c:"KE", d:3, tag:"Looks like highlands", img:"Aberdare National Park.jpg", g:["#2d5a3a","#8fc19a"],
+   place:"Aberdare Range", fact:"Misty moorland and waterfalls make the Aberdares feel more like Scotland, or Java, than Africa." }
 ];
 
-const $ = id => document.getElementById(id);
-let cur = 0, score = 0, streak = 0, locked = true, results = [], roundStart = 0;
+/* ---------- picking 10 scenes: 4 easy, 3 medium, 3 lookalike, mixed countries ---------- */
+const PLAN = [1,1,1,1,2,2,2,3,3,3];
+const SEEN_KEY = "idke_seen_v1";
 
-/* ---------- sound (tiny synth beeps, no files needed) ---------- */
+function shuffle(a) { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function seenSet() { try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || "[]")); } catch(e){ return new Set(); } }
+function saveSeen(set) { try { localStorage.setItem(SEEN_KEY, JSON.stringify([...set])); } catch(e){} }
+
+function pickGame() {
+  let seen = seenSet();
+  /* if nearly everything has been seen, reset memory so new games stay fresh */
+  if (BANK.filter((s,i)=>!seen.has(i)).length < 12) seen = new Set();
+  const used = new Set(), game = [];
+  let want = { ID:0, KE:0 };
+  PLAN.forEach(level => {
+    let pool = BANK.map((s,i)=>({s,i})).filter(o => o.s.d === level && !used.has(o.i));
+    let fresh = pool.filter(o => !seen.has(o.i));
+    if (fresh.length) pool = fresh;
+    /* keep the country mix balanced so you cannot just guess the pattern */
+    const lean = want.ID > want.KE ? "KE" : want.KE > want.ID ? "ID" : null;
+    let pref = lean ? pool.filter(o => o.s.c === lean) : pool;
+    if (!pref.length) pref = pool;
+    const pick = shuffle(pref)[0];
+    used.add(pick.i); want[pick.s.c]++; seen.add(pick.i);
+    game.push(pick.s);
+  });
+  saveSeen(seen);
+  /* shuffle within each difficulty block so order is never predictable */
+  const out = [];
+  [1,2,3].forEach(l => out.push(...shuffle(game.filter(s => s.d === l))));
+  return out;
+}
+
+/* ---------- helpers ---------- */
+const COMMONS = "https://commons.wikimedia.org/wiki/Special:FilePath/";
+const pic = f => f.startsWith("http") ? f : COMMONS + encodeURIComponent(f) + "?width=1800";
+const $ = id => document.getElementById(id);
+const NAME = { ID:"Indonesia", KE:"Kenya" };
+let rounds = [], cur = 0, score = 0, streak = 0, locked = true, results = [], roundStart = 0, fooledBy = [];
+
+/* ---------- sound ---------- */
 let actx;
-function beep(freqs, dur = .12, type = "sine", vol = .12) {
+function beep(freqs, dur=.12, type="sine", vol=.12) {
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    freqs.forEach((f, i) => {
+    freqs.forEach((f,i) => {
       const o = actx.createOscillator(), g = actx.createGain();
-      o.type = type; o.frequency.value = f; g.gain.value = vol;
-      o.connect(g); g.connect(actx.destination);
-      const t = actx.currentTime + i * dur;
-      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
-      o.start(t); o.stop(t + dur);
+      o.type = type; o.frequency.value = f; o.connect(g); g.connect(actx.destination);
+      const t = actx.currentTime + i*dur;
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t+dur);
+      o.start(t); o.stop(t+dur);
     });
-  } catch (e) {}
+  } catch(e){}
 }
 
 /* ---------- confetti ---------- */
 const cv = $("fx"), cx = cv.getContext("2d"); let bits = [];
-function sizeCv() { cv.width = innerWidth; cv.height = innerHeight; }
+function sizeCv(){ cv.width = innerWidth; cv.height = innerHeight; }
 addEventListener("resize", sizeCv); sizeCv();
-function confetti(n = 120) {
-  const cols = ["#ffd166","#e8473b","#1fa971","#fff","#5fd3df"];
-  for (let i = 0; i < n; i++) bits.push({
-    x: innerWidth / 2, y: innerHeight * .55, vx: (Math.random() - .5) * 16, vy: -Math.random() * 16 - 4,
-    s: Math.random() * 8 + 4, c: cols[i % cols.length], r: Math.random() * 6, vr: (Math.random() - .5) * .4, life: 120
-  });
-  if (bits.length === n) tick();
+function confetti(n=120) {
+  const cols = ["#ffd166","#e8473b","#1fa971","#fff","#5fd3df"], was = bits.length;
+  for (let i=0;i<n;i++) bits.push({ x:innerWidth/2, y:innerHeight*.55, vx:(Math.random()-.5)*16, vy:-Math.random()*16-4,
+    s:Math.random()*8+4, c:cols[i%cols.length], r:Math.random()*6, vr:(Math.random()-.5)*.4, life:120 });
+  if (!was) tick();
 }
 function tick() {
-  cx.clearRect(0, 0, cv.width, cv.height);
-  bits.forEach(b => {
-    b.vy += .5; b.x += b.vx; b.y += b.vy; b.r += b.vr; b.life--;
-    cx.save(); cx.translate(b.x, b.y); cx.rotate(b.r); cx.fillStyle = b.c;
-    cx.fillRect(-b.s / 2, -b.s / 2, b.s, b.s * .6); cx.restore();
-  });
-  bits = bits.filter(b => b.life > 0 && b.y < innerHeight + 30);
-  if (bits.length) requestAnimationFrame(tick); else cx.clearRect(0, 0, cv.width, cv.height);
+  cx.clearRect(0,0,cv.width,cv.height);
+  bits.forEach(b => { b.vy += .5; b.x += b.vx; b.y += b.vy; b.r += b.vr; b.life--;
+    cx.save(); cx.translate(b.x,b.y); cx.rotate(b.r); cx.fillStyle = b.c; cx.fillRect(-b.s/2,-b.s/2,b.s,b.s*.6); cx.restore(); });
+  bits = bits.filter(b => b.life > 0 && b.y < innerHeight+30);
+  if (bits.length) requestAnimationFrame(tick); else cx.clearRect(0,0,cv.width,cv.height);
 }
 
 /* ---------- screens ---------- */
-function show(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  $(id).classList.add("active");
-}
+function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList.remove("active")); $(id).classList.add("active"); }
 
 function setBg(r) {
   const bg = $("bg");
-  bg.classList.remove("zoom");
-  bg.style.opacity = 0;
-  bg.style.backgroundImage = `linear-gradient(160deg, ${r.fallback[0]}, ${r.fallback[1]})`;
+  bg.classList.remove("zoom"); bg.style.opacity = 0;
+  bg.style.backgroundImage = `linear-gradient(160deg, ${r.g[0]}, ${r.g[1]})`;
   const im = new Image();
-  im.onload = () => {
-    bg.style.backgroundImage = `url("${im.src}")`;
-    bg.style.opacity = 1; void bg.offsetWidth; bg.classList.add("zoom");
-  };
+  im.onload = () => { bg.style.backgroundImage = `url("${im.src}")`; bg.style.opacity = 1; void bg.offsetWidth; bg.classList.add("zoom"); };
   im.onerror = () => { bg.style.opacity = 1; };
   im.src = pic(r.img);
   setTimeout(() => { bg.style.opacity = 1; }, 1500);
 }
 
-function buildDots() {
-  $("dots").innerHTML = rounds.map(() => "<i></i>").join("");
-}
-function paintDots() {
-  [...$("dots").children].forEach((d, i) => {
+function buildDots(){ $("dots").innerHTML = rounds.map(() => "<i></i>").join(""); }
+function paintDots(){
+  [...$("dots").children].forEach((d,i) => {
     d.className = i === cur ? "now" : results[i] === true ? "right" : results[i] === false ? "wrong" : "";
   });
 }
+
+const LEVELS = { 1:["easy","Easy"], 2:["medium","Medium"], 3:["hard","Lookalike"] };
 
 function loadRound() {
   const r = rounds[cur];
   locked = false; roundStart = Date.now();
   setBg(r);
-  const lv = $("level"); lv.className = "hud-chip " + r.level;
-  lv.textContent = r.level === "hard" ? "Lookalike" : r.level[0].toUpperCase() + r.level.slice(1);
+  const lv = $("level"); lv.className = "hud-chip " + LEVELS[r.d][0]; lv.textContent = LEVELS[r.d][1];
   $("score").textContent = score + " pts";
-  $("prompt").textContent = r.level === "hard" ? "Careful... this one is tricky" : "Where in the world is this?";
-  ["ca", "cb"].forEach(id => { $(id).disabled = false; $(id).className = "choice"; });
+  $("prompt").textContent = r.d === 3 ? "Careful... this one is a trap" : r.d === 2 ? "Not so obvious this time" : "Where in the world is this?";
+  ["ca","cb"].forEach(id => { $(id).disabled = false; $(id).className = "choice"; });
   $("reveal").classList.remove("show");
   paintDots();
 }
 
 function choose(letter) {
   if (locked) return; locked = true;
-  const r = rounds[cur], ok = letter === r.answer;
+  const r = rounds[cur], guess = letter === "A" ? "ID" : "KE", ok = guess === r.c;
   const secs = (Date.now() - roundStart) / 1000;
   let gained = 0;
   if (ok) {
     streak++;
-    const base = r.level === "easy" ? 100 : r.level === "medium" ? 150 : 250;
-    const speed = Math.max(0, Math.round((10 - secs) * 5));
-    const combo = Math.min(streak - 1, 5) * 20;
-    gained = base + speed + combo; score += gained;
-    beep([523, 659, 784]); confetti(r.level === "hard" ? 200 : 110);
+    const base = r.d === 1 ? 100 : r.d === 2 ? 150 : 250;
+    gained = base + Math.max(0, Math.round((10 - secs) * 5)) + Math.min(streak-1, 5) * 20;
+    score += gained;
+    beep([523,659,784]); confetti(r.d === 3 ? 200 : 110);
   } else {
-    streak = 0; beep([220, 165], .18, "sawtooth", .08);
+    streak = 0; beep([220,165], .18, "sawtooth", .08);
     $("c" + letter.toLowerCase()).classList.add("shake");
+    fooledBy.push(r.tag);
   }
   results[cur] = ok;
-  ["ca", "cb"].forEach(id => $(id).disabled = true);
-  const winId = "c" + r.answer.toLowerCase();
+  ["ca","cb"].forEach(id => $(id).disabled = true);
+  const winId = r.c === "ID" ? "ca" : "cb";
   $(winId).classList.add("win");
-  ["ca", "cb"].forEach(id => { if (id !== winId) $(id).classList.add("dim"); });
+  ["ca","cb"].forEach(id => { if (id !== winId) $(id).classList.add("dim"); });
 
   $("score").textContent = score + " pts";
   $("verdict").textContent = ok ? "Correct!" : "Not quite!";
   $("verdict").className = ok ? "good" : "bad";
   $("pts").textContent = ok ? `+${gained} pts` + (streak > 1 ? `  |  ${streak} in a row` : "") : "";
+  $("tag").textContent = NAME[r.c] + "  |  " + r.tag;
   $("place").textContent = r.place;
   $("fact").textContent = r.fact;
   $("credit").textContent = "Photo: Wikimedia Commons contributors";
@@ -362,11 +391,7 @@ function choose(letter) {
   setTimeout(() => $("reveal").classList.add("show"), 450);
 }
 
-function next() {
-  cur++;
-  if (cur >= rounds.length) return finish();
-  loadRound();
-}
+function next() { cur++; if (cur >= rounds.length) return finish(); loadRound(); }
 
 function finish() {
   $("reveal").classList.remove("show");
@@ -379,11 +404,12 @@ function finish() {
   else { rank = "Beginner Backpacker"; msg = "The equator tricked you this time. Time for a rematch."; }
   $("rank").textContent = `${rank}  (${right}/10 correct)`;
   $("endmsg").textContent = msg;
-  show("end"); confetti(right >= 7 ? 260 : 60); beep([523, 659, 784, 1047], .14);
+  $("fooled").textContent = fooledBy.length ? "You were fooled by: " + [...new Set(fooledBy)].join(", ") + "." : "Nothing fooled you. Perfect run!";
+  show("end"); confetti(right >= 7 ? 260 : 60); beep([523,659,784,1047], .14);
 }
 
 function start() {
-  cur = 0; score = 0; streak = 0; results = [];
+  rounds = pickGame(); cur = 0; score = 0; streak = 0; results = []; fooledBy = [];
   buildDots(); show("game"); loadRound();
 }
 
@@ -402,8 +428,8 @@ addEventListener("keydown", e => {
   if (k === "enter" && $("start").classList.contains("active")) start();
 });
 
-/* preload start-screen backdrop with the first round photo */
-setBg(rounds[0]);
+$("bankInfo").textContent = BANK.length + " scenes in the bank. Every game draws 10 fresh ones.";
+setBg(BANK[0]);
 </script>
 </body>
 </html>
