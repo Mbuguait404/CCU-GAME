@@ -31,7 +31,8 @@
   .big-btn:active { transform:translateY(6px); box-shadow:0 2px 0 #c99a2e; }
   .legend { display:flex; gap:10px; margin-top:24px; font-size:14px; flex-wrap:wrap; justify-content:center; }
   .pill { padding:6px 14px; border-radius:999px; font-weight:600; }
-  #bankInfo { margin-top:14px; font-size:13px; opacity:.7; }
+  #bankInfo { margin-top:14px; font-size:13px; opacity:.75; }
+  #resetBtn { margin-top:6px; background:none; border:0; color:#fff; opacity:.55; font-family:inherit; font-size:12px; text-decoration:underline; cursor:pointer; }
 
   #hud { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 22px; }
   .hud-chip { background:var(--card); backdrop-filter:blur(8px); border-radius:999px; padding:8px 18px; font-weight:700; font-size:18px; }
@@ -105,6 +106,7 @@
     <span class="pill" style="background:#d63b3b">Lookalikes: the traps</span>
   </div>
   <div id="bankInfo"></div>
+  <button id="resetBtn">Reset scene memory</button>
 </div>
 
 <div class="screen" id="game">
@@ -141,141 +143,182 @@
 
 <script>
 /* =====================================================================
-   THE SCENE BANK
-   Every scene has:
-     c     = correct country: "ID" (Indonesia) or "KE" (Kenya)
-     d     = difficulty: 1 easy, 2 medium, 3 lookalike trap
-     tag   = what the scene plays on (shown in the reveal)
-     img   = Wikimedia Commons file name (or a full https image link)
-     g     = fallback gradient colors if the photo fails to load
-     place, fact = shown after the answer
-
-   HOW TO ADD OR FIX A PHOTO:
-   Open commons.wikimedia.org, find the picture, copy the file name
-   after "File:" and paste it as img. You can add as many scenes as
-   you like. The game draws 10 at random each time.
-   Photos marked "verified" below came straight from search results.
-   Others are best guesses: if one shows a colored gradient instead of
-   a photo, just swap its img value.
+   THE SCENE BANK (50 scenes)
+   id    = unique number. NEVER change an id once used: it powers the
+           no-repeat memory. New scenes get the next free number.
+   c     = correct country: "ID" (Indonesia) or "KE" (Kenya)
+   d     = difficulty: 1 easy, 2 medium, 3 lookalike trap
+   img   = Wikimedia Commons file name (or a full https image link)
+   alt   = optional backup file name, tried automatically if img fails
+   g     = fallback gradient if neither photo loads
+   Photos marked VERIFIED came directly from search results.
+   To fix any photo: find one on commons.wikimedia.org, copy the name
+   after "File:", paste it into img (or alt).
    ===================================================================== */
 const BANK = [
- /* ------------------- INDONESIA: EASY (the classics) ------------------- */
- { c:"ID", d:1, tag:"Volcano", img:"Sunrise on Mount Bromo.jpg", g:["#3b2a4f","#e0795a"],
-   place:"Mount Bromo, East Java", fact:"Bromo sits inside the Tengger caldera, and visitors hike up before dawn for this view." },
- { c:"ID", d:1, tag:"Temple", img:"Borobudur-Nothwest-view.jpg", g:["#27493a","#8fb89a"],
+ /* ============ INDONESIA: EASY (the classics) ============ */
+ { id:1, c:"ID", d:1, tag:"Volcano", img:"Sunrise on Mount Bromo.jpg", alt:"Mount Bromo East Java.jpg", g:["#3b2a4f","#e0795a"],
+   place:"Mount Bromo, East Java", fact:"Bromo sits inside the Tengger caldera, and visitors hike up before dawn for this view." }, // VERIFIED
+ { id:2, c:"ID", d:1, tag:"Temple", img:"Borobudur-Nothwest-view.jpg", alt:"Borobudur Temple.jpg", g:["#27493a","#8fb89a"],
    place:"Borobudur, Central Java", fact:"It is the largest Buddhist temple in the world, built in the 9th century." },
- { c:"ID", d:1, tag:"Rice terraces", img:"Tegalalang Rice Terrace.jpg", g:["#1f6b36","#8fd16a"],
-   place:"Tegalalang, Bali", fact:"The terraces follow the subak system, a water-sharing method over 1,000 years old." },
- { c:"ID", d:1, tag:"Tropical islands", img:"Landscape of Raja Ampat; January 2016.jpg", g:["#0e6f86","#5fd3df"],
-   place:"Raja Ampat, West Papua", fact:"It has more marine species than anywhere else on Earth." },
- { c:"ID", d:1, tag:"Beach", img:"Beautiful Sunset at Kesirat Beach.jpg", g:["#7a3b5a","#f0a35e"],
-   place:"Kesirat Beach, Indonesia", fact:"Indonesia has over 17,000 islands, so the coastline is almost endless." },
- { c:"ID", d:1, tag:"Skyline", img:"Jakarta skyline.jpg", g:["#24324a","#7b93b8"],
-   place:"Jakarta skyline", fact:"Jakarta is one of the largest urban areas on Earth, home to over 10 million people in the city itself." },
+ { id:3, c:"ID", d:1, tag:"Rice terraces", img:"Tegallalang Rice Terraces Bali.jpg", alt:"Tegallalang Rice Terraces.jpg", g:["#1f6b36","#8fd16a"],
+   place:"Tegallalang, Bali", fact:"The terraces follow the subak system, a water-sharing method over 1,000 years old." }, // VERIFIED
+ { id:4, c:"ID", d:1, tag:"Tropical islands", img:"Landscape of Raja Ampat; January 2016.jpg", alt:"Raja Ampat.jpg", g:["#0e6f86","#5fd3df"],
+   place:"Raja Ampat, West Papua", fact:"It has more marine species than anywhere else on Earth." }, // VERIFIED
+ { id:5, c:"ID", d:1, tag:"Beach", img:"Beautiful Sunset at Kesirat Beach.jpg", alt:"Kuta Beach Bali.jpg", g:["#7a3b5a","#f0a35e"],
+   place:"Kesirat Beach", fact:"Indonesia has over 17,000 islands, so the coastline is almost endless." }, // VERIFIED
+ { id:6, c:"ID", d:1, tag:"Skyline", img:"Jakarta skyline.jpg", alt:"Jakarta Skyline.jpg", g:["#24324a","#7b93b8"],
+   place:"Jakarta skyline", fact:"Jakarta is one of the largest urban areas on Earth." },
+ { id:7, c:"ID", d:1, tag:"Volcano", img:"Mount Merapi.jpg", alt:"Gunung Merapi.jpg", g:["#4a3a3a","#c98a6a"],
+   place:"Mount Merapi, Java", fact:"Merapi is one of the most active volcanoes in Indonesia." },
+ { id:8, c:"ID", d:1, tag:"Temple", img:"Prambanan Temple.jpg", alt:"Prambanan.jpg", g:["#4a4a3a","#c8c08a"],
+   place:"Prambanan, Central Java", fact:"Prambanan is the largest Hindu temple compound in Indonesia." },
+ { id:9, c:"ID", d:1, tag:"Wildlife", img:"Komodo dragon.jpg", alt:"Komodo dragon Komodo National Park.jpg", g:["#5a4a2a","#b89a5a"],
+   place:"Komodo National Park", fact:"Komodo dragons live nowhere else in the wild but a few Indonesian islands." },
+ { id:10, c:"ID", d:1, tag:"Island paradise", img:"Pink Beach Komodo.jpg", alt:"Pink Beach, Komodo.jpg", g:["#b05a7a","#f2b6c6"],
+   place:"Pink Beach, Komodo", fact:"Crushed red coral gives this beach its pink tint." },
 
- /* ------------------- INDONESIA: MEDIUM ------------------- */
- { c:"ID", d:2, tag:"Crater lake", img:"Kelimutu.jpg", g:["#1c6a6a","#7fd6c9"],
-   place:"Kelimutu, Flores", fact:"The three crater lakes change color over the years because of volcanic gases." },
- { c:"ID", d:2, tag:"Tea hills", img:"Landskap kebun teh Wonosari.jpg", g:["#1d5e34","#74c27f"],
-   place:"Wonosari tea gardens, East Java", fact:"Java's highlands grow tea in rows almost identical to those in East Africa." },
- { c:"ID", d:2, tag:"Jungle", img:"Foto Hutan Papua Yang Rusak (10202).jpg", g:["#173d24","#4f9a5f"],
-   place:"Papua rainforest", fact:"Papua holds one of the largest remaining tropical rainforests in the world." },
- { c:"ID", d:2, tag:"Highlands", img:"Lanskap Gunung Gede Cianjur.jpg", g:["#2d5a45","#9cc7a8"],
-   place:"Mount Gede, West Java", fact:"Mount Gede Pangrango National Park is one of Indonesia's oldest protected areas." },
- { c:"ID", d:2, tag:"Island view", img:"Lombok Island viewed from Gili Trawangan.jpg", g:["#1b7a8c","#8fe0e8"],
-   place:"Lombok from Gili Trawangan", fact:"The Gili islands have no motorized vehicles, only bikes and horse carts." },
- { c:"ID", d:2, tag:"Cityscape", img:"Bandung skyline.jpg", g:["#3a3f5c","#a3a8cf"],
-   place:"Bandung, West Java", fact:"Bandung sits in a highland basin, so it is cooler than most Indonesian cities." },
+ /* ============ INDONESIA: MEDIUM ============ */
+ { id:11, c:"ID", d:2, tag:"Crater lake", img:"Kelimutu crater lakes.jpg", alt:"Kelimutu lakes.jpg", g:["#1c6a6a","#7fd6c9"],
+   place:"Kelimutu, Flores", fact:"The three crater lakes change color over the years because of volcanic gases." }, // VERIFIED
+ { id:12, c:"ID", d:2, tag:"Tea hills", img:"Landskap kebun teh Wonosari.jpg", alt:"Tea plantation Java.jpg", g:["#1d5e34","#74c27f"],
+   place:"Wonosari tea gardens, East Java", fact:"Java's highlands grow tea in rows almost identical to those in East Africa." }, // VERIFIED
+ { id:13, c:"ID", d:2, tag:"Jungle", img:"Foto Hutan Papua Yang Rusak (10202).jpg", alt:"Rainforest Indonesia.jpg", g:["#173d24","#4f9a5f"],
+   place:"Papua rainforest", fact:"Papua holds one of the largest remaining tropical rainforests in the world." }, // VERIFIED
+ { id:14, c:"ID", d:2, tag:"Highlands", img:"Lanskap Gunung Gede Cianjur.jpg", alt:"Mount Gede Pangrango.jpg", g:["#2d5a45","#9cc7a8"],
+   place:"Mount Gede, West Java", fact:"Mount Gede Pangrango National Park is one of Indonesia's oldest protected areas." }, // VERIFIED
+ { id:15, c:"ID", d:2, tag:"Island view", img:"Lombok Island viewed from Gili Trawangan.jpg", alt:"Gili Trawangan.jpg", g:["#1b7a8c","#8fe0e8"],
+   place:"Lombok from Gili Trawangan", fact:"The Gili islands have no motorized vehicles, only bikes and horse carts." }, // VERIFIED
+ { id:16, c:"ID", d:2, tag:"Cityscape", img:"Bandung Pasupati Skyline.jpg", alt:"Bandung downtown.JPG", g:["#3a3f5c","#a3a8cf"],
+   place:"Bandung, West Java", fact:"Bandung sits in a highland basin, so it is cooler than most Indonesian cities." }, // VERIFIED
+ { id:17, c:"ID", d:2, tag:"Giant lake", img:"Lake Toba.jpg", alt:"Danau Toba.jpg", g:["#2a5a7a","#8fc0dc"],
+   place:"Lake Toba, Sumatra", fact:"Toba fills the crater of a supervolcano that erupted about 74,000 years ago." },
+ { id:18, c:"ID", d:2, tag:"Sulfur crater", img:"Kawah Ijen -East Java -Indonesia-31July2009.jpg", alt:"Kawah Ijen.jpg", g:["#2a6a6a","#9fe0d0"],
+   place:"Kawah Ijen, East Java", fact:"The turquoise acid lake sits inside a crater where miners still carry sulfur by hand." }, // VERIFIED
+ { id:19, c:"ID", d:2, tag:"Crater lake", img:"Telaga Warna Dieng.jpg", alt:"Dieng Plateau.jpg", g:["#2a7a6a","#8fe0c0"],
+   place:"Dieng Plateau, Central Java", fact:"Dieng is a volcanic highland where the air is cool and mist hangs over the lakes." },
+ { id:20, c:"ID", d:2, tag:"Cityscape", img:"Surabaya skyline.jpg", alt:"Surabaya.jpg", g:["#2e3a52","#8a9cc0"],
+   place:"Surabaya, East Java", fact:"Surabaya is Indonesia's second largest city and a major port." },
 
- /* ------------------- INDONESIA: LOOKALIKES (look like Kenya) ------------------- */
- { c:"ID", d:3, tag:"Looks like savanna", img:"Bukit Wairinding-Sumba Timur.jpg", g:["#8a6a1c","#e3c46a"],
-   place:"Wairinding Hills, Sumba", fact:"Sumba's dry climate gives it African-style grassland, and it is famous for sandalwood ponies." },
- { c:"ID", d:3, tag:"Looks like savanna", img:"Padang Rumput dan Kuda Sandalwood.jpg", g:["#9a7b2c","#e8cf85"],
-   place:"Sumba grassland with sandalwood horses", fact:"Sandalwood ponies roam open grassland that could pass for the Serengeti." },
- { c:"ID", d:3, tag:"Looks like savanna", img:"Liarnya keindahan Sumba.jpg", g:["#a0842f","#ecd89a"],
-   place:"Sumba, East Nusa Tenggara", fact:"Sumba is one of Indonesia's driest islands, with a long dry season." },
- { c:"ID", d:3, tag:"Looks like savanna", img:"Gersang Sabana.jpg", g:["#8d6f25","#dfc17a"],
-   place:"Dry savanna, Indonesia", fact:"Several Indonesian parks, such as Baluran in East Java, are nicknamed Little Africa." },
- { c:"ID", d:3, tag:"Looks like savanna", img:"Oro Oro Ombo.jpg", g:["#6f8a3a","#cddf8f"],
-   place:"Oro-oro Ombo, Mount Semeru", fact:"This golden grassland sits at the foot of Java's highest volcano." },
- { c:"ID", d:3, tag:"Looks like Rift Valley", img:"Padang Sabana.jpg", g:["#8a7a35","#dccb85"],
-   place:"Open savanna, Indonesia", fact:"Wide grass plains with scattered trees are rare in Indonesia, which is why they fool people." },
+ /* ============ INDONESIA: LOOKALIKES (look like Kenya) ============ */
+ { id:21, c:"ID", d:3, tag:"Looks like savanna", img:"Bukit Wairinding-Sumba Timur.jpg", alt:"Bukit Wairinding, Sumba Timur.jpg", g:["#8a6a1c","#e3c46a"],
+   place:"Wairinding Hills, Sumba", fact:"Sumba's dry climate gives it African-style grassland, and it is famous for sandalwood ponies." }, // VERIFIED
+ { id:22, c:"ID", d:3, tag:"Looks like savanna", img:"Padang Rumput dan Kuda Sandalwood.jpg", alt:"Sumba Pulau Seribu Bukit.jpg", g:["#9a7b2c","#e8cf85"],
+   place:"Sumba grassland with sandalwood horses", fact:"Sandalwood ponies roam open grassland that could pass for the Serengeti." }, // VERIFIED
+ { id:23, c:"ID", d:3, tag:"Looks like savanna", img:"Liarnya keindahan Sumba.jpg", alt:"Puru Kambera, Sumba Timur.jpg", g:["#a0842f","#ecd89a"],
+   place:"Sumba, East Nusa Tenggara", fact:"Sumba is one of Indonesia's driest islands, with a long dry season." }, // VERIFIED
+ { id:24, c:"ID", d:3, tag:"Looks like savanna", img:"Gersang Sabana.jpg", alt:"Padang Sabana.jpg", g:["#8d6f25","#dfc17a"],
+   place:"Dry savanna, Indonesia", fact:"Several Indonesian parks, such as Baluran in East Java, are nicknamed Little Africa." }, // VERIFIED
+ { id:25, c:"ID", d:3, tag:"Looks like savanna", img:"Oro Oro Ombo.jpg", alt:"Oro-oro Ombo.jpg", g:["#6f8a3a","#cddf8f"],
+   place:"Oro-oro Ombo, Mount Semeru", fact:"This golden grassland sits at the foot of Java's highest volcano." }, // VERIFIED
+ { id:26, c:"ID", d:3, tag:"Looks like Rift Valley", img:"Padang Sabana.jpg", alt:"Hamparan Sabana di Kawasan Gunung Merbabu.jpg", g:["#8a7a35","#dccb85"],
+   place:"Open savanna, Indonesia", fact:"Wide grass plains with scattered trees are rare in Indonesia, which is why they fool people." }, // VERIFIED
+ { id:27, c:"ID", d:3, tag:"Looks like savanna", img:"Bekol Savanna Baluran.jpg", alt:"Baluran National Park.jpg", g:["#9a8230","#e6d28f"],
+   place:"Bekol Savanna, Baluran National Park", fact:"Baluran is nicknamed Little Africa for its savanna and wild banteng cattle." },
+ { id:28, c:"ID", d:3, tag:"Looks like African highlands", img:"Kabut dan Savana Tegal Alun, Gunung Papandayan, Garut.jpg", alt:"Tegal Alun.jpg", g:["#5a7a4a","#c0d8a8"],
+   place:"Tegal Alun, Mount Papandayan", fact:"Misty meadows on a Javan volcano that look more like the African highlands." }, // VERIFIED
+ { id:29, c:"ID", d:3, tag:"Looks like African plains", img:"Hamparan Sabana di Kawasan Gunung Merbabu.jpg", alt:"Pemandangan di sabana 1 jalur selo dengan latar Gunung merapi.jpg", g:["#7a8a3a","#d4e08f"],
+   place:"Savanna at Mount Merbabu", fact:"Merbabu's open grass slopes turn golden in the dry season." }, // VERIFIED
+ { id:30, c:"ID", d:3, tag:"Looks like African grassland", img:"A View To Remember.jpg", alt:"Montane Savannah Landscape in West Java.png", g:["#8a8a3a","#e0dc90"],
+   place:"Grassland in Indonesia", fact:"Indonesia has more grassland than people expect, especially on dry eastern islands." }, // VERIFIED
 
- /* ------------------- KENYA: EASY (the classics) ------------------- */
- { c:"KE", d:1, tag:"Wildlife", img:"Wbeest Mara.jpg", g:["#7a5a1c","#e8c46a"],
-   place:"Maasai Mara", fact:"The Great Migration brings over a million wildebeest across the Mara River each year." },
- { c:"KE", d:1, tag:"Savanna", img:"Maasai Mara savanna landscape, Kenya.jpg", g:["#8a6a2a","#ecd28c"],
-   place:"Maasai Mara savanna", fact:"The Mara is the northern end of the Serengeti ecosystem." },
- { c:"KE", d:1, tag:"Wildlife", img:"Fred the elephant walking away into savanna, Northern Mara, Kenya.jpg", g:["#7c6030","#d9bb78"],
-   place:"Northern Mara, Kenya", fact:"Kenya is home to some of the largest elephant populations in Africa." },
- { c:"KE", d:1, tag:"Mountain", img:"Early morning view of Mt. Kenya's peaks, from an altitude of 4,290 meters (14,075 ft) (15850536024).jpg", g:["#33506b","#a9c4dc"],
-   place:"Mount Kenya", fact:"The country is named after this mountain, and it sits almost exactly on the equator." },
- { c:"KE", d:1, tag:"Wildlife", img:"Four wildebeests in Maasai Mara, Kenya.jpg", g:["#7a5e24","#dcc27f"],
-   place:"Maasai Mara", fact:"Wildebeest travel in huge herds, following the rains across the plains." },
- { c:"KE", d:1, tag:"Lake and flamingos", img:"Lake Nakuru flamingos.jpg", g:["#a8566f","#f2b6c6"],
+ /* ============ KENYA: EASY (the classics) ============ */
+ { id:31, c:"KE", d:1, tag:"Wildlife", img:"Wbeest Mara.jpg", alt:"Wildebeest Migration Masai mara.jpg", g:["#7a5a1c","#e8c46a"],
+   place:"Maasai Mara", fact:"The Great Migration brings over a million wildebeest across the Mara River each year." }, // VERIFIED
+ { id:32, c:"KE", d:1, tag:"Savanna", img:"Maasai Mara savanna landscape, Kenya.jpg", alt:"Masai Mara at Sunset.jpg", g:["#8a6a2a","#ecd28c"],
+   place:"Maasai Mara savanna", fact:"The Mara is the northern end of the Serengeti ecosystem." }, // VERIFIED
+ { id:33, c:"KE", d:1, tag:"Wildlife", img:"Fred the elephant walking away into savanna, Northern Mara, Kenya.jpg", alt:"Maasai Mara National Reserve Kenya.jpg", g:["#7c6030","#d9bb78"],
+   place:"Northern Mara", fact:"Kenya is home to some of the largest elephant populations in Africa." }, // VERIFIED
+ { id:34, c:"KE", d:1, tag:"Mountain", img:"Early morning view of Mt. Kenya's peaks, from an altitude of 4,290 meters (14,075 ft) (15850536024).jpg", alt:"Ansicht im Mount Kenya Nationalpark in Kenia.jpg", g:["#33506b","#a9c4dc"],
+   place:"Mount Kenya", fact:"The country is named after this mountain, and it sits almost exactly on the equator." }, // VERIFIED
+ { id:35, c:"KE", d:1, tag:"Wildlife", img:"Four wildebeests in Maasai Mara, Kenya.jpg", alt:"GnusAndZebrasInMaraMasai.jpg", g:["#7a5e24","#dcc27f"],
+   place:"Maasai Mara", fact:"Wildebeest travel in huge herds, following the rains across the plains." }, // VERIFIED
+ { id:36, c:"KE", d:1, tag:"Lake and flamingos", img:"Lake Nakuru flamingos.jpg", alt:"Flamingos at Lake Nakuru.jpg", g:["#a8566f","#f2b6c6"],
    place:"Lake Nakuru, Rift Valley", fact:"Flamingo numbers rise and fall with the lake's water level and algae." },
+ { id:37, c:"KE", d:1, tag:"Wildlife", img:"Lion Masai Mara.jpg", alt:"Lion in Maasai Mara.jpg", g:["#7a5a2a","#d8b878"],
+   place:"Maasai Mara", fact:"Lions in the Mara hunt the migrating herds as they cross the plains." },
+ { id:38, c:"KE", d:1, tag:"Wildlife", img:"Giraffe Nairobi National Park.jpg", alt:"Masai giraffe.jpg", g:["#8a6a3a","#e0c890"],
+   place:"Nairobi National Park", fact:"You can watch giraffes with city skyscrapers on the horizon." },
+ { id:39, c:"KE", d:1, tag:"Wildlife", img:"Amboseli elephants Kilimanjaro.jpg", alt:"Amboseli National Park.jpg", g:["#6a6a8a","#c0c0d8"],
+   place:"Amboseli National Park", fact:"Amboseli is famous for elephants framed by Mount Kilimanjaro, just across the border in Tanzania." },
+ { id:40, c:"KE", d:1, tag:"Savanna", img:"Acacia tree Maasai Mara.jpg", alt:"Acacia tree in the Maasai Mara.jpg", g:["#8a6a2a","#e8cc8a"],
+   place:"Maasai Mara", fact:"The flat-topped acacia is the classic shape of the East African plains." },
 
- /* ------------------- KENYA: MEDIUM ------------------- */
- { c:"KE", d:2, tag:"Arid country", img:"Arid landscape with acacia tree, Samburu National Reserve, Kenya.jpg", g:["#9a6b3a","#e3b87a"],
-   place:"Samburu National Reserve", fact:"Samburu's dry north is home to species you will not find in the Mara, like the Grevy's zebra." },
- { c:"KE", d:2, tag:"Arid country", img:"Landscape with pyramid mountain and dirt road, Samburu National Reserve, Kenya.jpg", g:["#8d5f3a","#dba878"],
-   place:"Samburu, northern Kenya", fact:"Northern Kenya is semi-desert, a very different world from the green highlands." },
- { c:"KE", d:2, tag:"Wildlife", img:"Landscape with mountain and impala herd in Samburu National Reserve, Kenya.jpg", g:["#7d6a3a","#d8c488"],
-   place:"Samburu National Reserve", fact:"Impala can leap up to 3 meters high and 10 meters long." },
- { c:"KE", d:2, tag:"Highlands", img:"FROM THE HILL TOPS OF NGONG.JPG", g:["#4d7a4a","#a8d19a"],
-   place:"Ngong Hills, near Nairobi", fact:"The Ngong Hills overlook the Rift Valley and are a popular hiking spot." },
- { c:"KE", d:2, tag:"Alpine lake", img:"Ansicht Lake Michaelson im Mount Kenya Nationalpark (54244787631).jpg", g:["#3f6a7a","#9fcbd6"],
-   place:"Lake Michaelson, Mount Kenya", fact:"Glacial lakes sit high on Mount Kenya, surrounded by giant lobelias." },
- { c:"KE", d:2, tag:"Dry riverbed", img:"ENTASOPIA DRY RIVER BED LANDSCAPE.jpg", g:["#a07a4a","#e8c698"],
-   place:"Entasopia, Kenya", fact:"Many Kenyan rivers run dry for months and then flood after heavy rain." },
-
- /* ------------------- KENYA: LOOKALIKES (look like Indonesia) ------------------- */
- { c:"KE", d:3, tag:"Looks like Java", img:"Kericho tea plantation.jpg", g:["#1d5e34","#74c27f"],
-   place:"Kericho tea plantations", fact:"Kericho gets rain almost year round, and tea is among Kenya's biggest exports." },
- { c:"KE", d:3, tag:"Looks like Bali", img:"Diani Beach.jpg", g:["#0f8a8a","#7fe0d4"],
-   place:"Diani Beach, South Coast", fact:"A coral reef protects this coast, and colobus monkeys live in the nearby forest." },
- { c:"KE", d:3, tag:"Looks like Indonesian port", img:"Lamu Old Town.jpg", g:["#7a6a52","#e3d2a8"],
-   place:"Lamu Old Town", fact:"Lamu is a UNESCO World Heritage Site and one of the oldest Swahili settlements." },
- { c:"KE", d:3, tag:"Looks like a tropical coast", img:"Watamu beach.jpg", g:["#1b8a94","#8fe3e0"],
-   place:"Watamu, Kenyan coast", fact:"Watamu has coral gardens and nesting sea turtles." },
- { c:"KE", d:3, tag:"Looks like Asian skyline", img:"Nairobi skyline.jpg", g:["#2b3a55","#8aa0c4"],
+ /* ============ KENYA: MEDIUM ============ */
+ { id:41, c:"KE", d:2, tag:"Arid country", img:"Arid landscape with acacia tree, Samburu National Reserve, Kenya.jpg", alt:"Arid landscape and acacia tree with weavers' nests, Samburu National Reserve, Kenya.jpg", g:["#9a6b3a","#e3b87a"],
+   place:"Samburu National Reserve", fact:"Samburu's dry north is home to species you will not find in the Mara, like the Grevy's zebra." }, // VERIFIED
+ { id:42, c:"KE", d:2, tag:"Arid country", img:"Landscape with pyramid mountain and dirt road, Samburu National Reserve, Kenya.jpg", alt:"Bare tree and boulders in arid landscape, Samburu National Reserve, Kenya.jpg", g:["#8d5f3a","#dba878"],
+   place:"Samburu, northern Kenya", fact:"Northern Kenya is semi-desert, a very different world from the green highlands." }, // VERIFIED
+ { id:43, c:"KE", d:2, tag:"Wildlife", img:"Landscape with mountain and impala herd in Samburu National Reserve, Kenya.jpg", alt:"Arid landscape with acacia tree, Samburu National Reserve, Kenya.jpg", g:["#7d6a3a","#d8c488"],
+   place:"Samburu National Reserve", fact:"Impala can leap up to 3 meters high and 10 meters long." }, // VERIFIED
+ { id:44, c:"KE", d:2, tag:"Highlands", img:"FROM THE HILL TOPS OF NGONG.JPG", alt:"A section view of the Great Rift Valley Escapement cutting across the Kenyan highlands, East Africa.jpg", g:["#4d7a4a","#a8d19a"],
+   place:"Ngong Hills, near Nairobi", fact:"The Ngong Hills overlook the Rift Valley and are a popular hiking spot." }, // VERIFIED
+ { id:45, c:"KE", d:2, tag:"Alpine lake", img:"Ansicht Lake Michaelson im Mount Kenya Nationalpark (54244787631).jpg", alt:"Ansicht im Mount Kenya Nationalpark 1.jpg", g:["#3f6a7a","#9fcbd6"],
+   place:"Lake Michaelson, Mount Kenya", fact:"Glacial lakes sit high on Mount Kenya, surrounded by giant lobelias." }, // VERIFIED
+ { id:46, c:"KE", d:2, tag:"Dry riverbed", img:"ENTASOPIA DRY RIVER BED LANDSCAPE.jpg", alt:"Fort Ternan view of the railway tracks.jpg", g:["#a07a4a","#e8c698"],
+   place:"Entasopia, Kenya", fact:"Many Kenyan rivers run dry for months and then flood after heavy rain." }, // VERIFIED
+ { id:47, c:"KE", d:2, tag:"Rift Valley lake", img:"Lake Naivasha.jpg", alt:"Lake Naivasha Kenya.jpg", g:["#3a6a5a","#9fd0bc"],
+   place:"Lake Naivasha", fact:"Naivasha is a freshwater lake in the Rift Valley, home to hippos and hundreds of bird species." },
+ { id:48, c:"KE", d:2, tag:"Desert lake", img:"Lake Turkana.jpg", alt:"Lake Turkana Kenya.jpg", g:["#3a7a7a","#a0d8d0"],
+   place:"Lake Turkana, northern Kenya", fact:"Turkana is the world's largest permanent desert lake, nicknamed the Jade Sea." },
+ { id:49, c:"KE", d:2, tag:"Cityscape", img:"Nairobi skyline.jpg", alt:"Nairobi CBD.jpg", g:["#2b3a55","#8aa0c4"],
    place:"Nairobi skyline", fact:"Nairobi is the only capital in the world with a national park inside its city limits." },
- { c:"KE", d:3, tag:"Looks like Indonesia's rainforest", img:"Kakamega Forest.jpg", g:["#16402a","#4f9a60"],
+ { id:50, c:"KE", d:2, tag:"Rift Valley", img:"Hell's Gate National Park.jpg", alt:"Hells Gate National Park.jpg", g:["#8a5a3a","#d8a878"],
+   place:"Hell's Gate National Park", fact:"Red cliffs and open grassland inspired scenes in The Lion King." },
+
+ /* ============ KENYA: LOOKALIKES (look like Indonesia) ============ */
+ { id:51, c:"KE", d:3, tag:"Looks like Java", img:"Kenya-Tealand-Near-Kericho-2012.JPG", alt:"Kericho Tea Farm.jpg", g:["#1d5e34","#74c27f"],
+   place:"Kericho tea plantations", fact:"Kericho gets rain almost year round, and tea is among Kenya's biggest exports." }, // VERIFIED
+ { id:52, c:"KE", d:3, tag:"Looks like Java", img:"Tea farming in Kericho 10.JPG", alt:"Tea farming in Kericho 26.JPG", g:["#2a6a3a","#80c890"],
+   place:"Kericho tea farming", fact:"Kenya is one of the world's top tea exporters." }, // VERIFIED
+ { id:53, c:"KE", d:3, tag:"Looks like Bali", img:"Diani Beach.jpg", alt:"Diani Beach Kenya.jpg", g:["#0f8a8a","#7fe0d4"],
+   place:"Diani Beach, South Coast", fact:"A coral reef protects this coast, and colobus monkeys live in the nearby forest." },
+ { id:54, c:"KE", d:3, tag:"Looks like an Indonesian port", img:"Lamu Old Town.jpg", alt:"Lamu Island.jpg", g:["#7a6a52","#e3d2a8"],
+   place:"Lamu Old Town", fact:"Lamu is a UNESCO World Heritage Site and one of the oldest Swahili settlements." },
+ { id:55, c:"KE", d:3, tag:"Looks like a tropical coast", img:"Watamu beach.jpg", alt:"Watamu.jpg", g:["#1b8a94","#8fe3e0"],
+   place:"Watamu, Kenyan coast", fact:"Watamu has coral gardens and nesting sea turtles." },
+ { id:56, c:"KE", d:3, tag:"Looks like Indonesian rainforest", img:"Kakamega Forest.jpg", alt:"Kakamega Forest Kenya.jpg", g:["#16402a","#4f9a60"],
    place:"Kakamega Forest, western Kenya", fact:"It is the last remnant of the ancient rainforest that once stretched across Africa." },
- { c:"KE", d:3, tag:"Looks like a volcano crater", img:"Menengai Crater.jpg", g:["#5a4a3a","#b8a48a"],
+ { id:57, c:"KE", d:3, tag:"Looks like an Indonesian volcano", img:"Menengai Crater.jpg", alt:"Mount Longonot.jpg", g:["#5a4a3a","#b8a48a"],
    place:"Menengai Crater, Nakuru", fact:"It is one of the largest volcanic calderas in the world." },
- { c:"KE", d:3, tag:"Looks like highlands", img:"Aberdare National Park.jpg", g:["#2d5a3a","#8fc19a"],
-   place:"Aberdare Range", fact:"Misty moorland and waterfalls make the Aberdares feel more like Scotland, or Java, than Africa." }
+ { id:58, c:"KE", d:3, tag:"Looks like Scotland, or Java", img:"Aberdare National Park.jpg", alt:"Aberdare Range.jpg", g:["#2d5a3a","#8fc19a"],
+   place:"Aberdare Range", fact:"Misty moorland and waterfalls make the Aberdares feel more like Scotland, or Java, than Africa." },
+ { id:59, c:"KE", d:3, tag:"Looks like Indonesian highlands", img:"Tea picking in Nandi Hills.jpg", alt:"Rolling tea plantations leading to Kawaida Waterfall, Cianda, Kiambu County 05.jpg", g:["#2a6a3a","#78c088"],
+   place:"Nandi Hills tea country", fact:"Nandi Hills' green slopes and tea rows are easy to mistake for Java." }, // VERIFIED
+ { id:60, c:"KE", d:3, tag:"Looks like Indonesian waterfall country", img:"Thomson Falls.jpg", alt:"Thomsons Falls Nyahururu.jpg", g:["#2a5a3a","#80b890"],
+   place:"Thomson's Falls, Nyahururu", fact:"This 74-meter waterfall sits in cool highland country at about 2,300 meters." }
 ];
 
-/* ---------- picking 10 scenes: 4 easy, 3 medium, 3 lookalike, mixed countries ---------- */
+/* ---------- game plan: 4 easy, 3 medium, 3 lookalike ---------- */
 const PLAN = [1,1,1,1,2,2,2,3,3,3];
-const SEEN_KEY = "idke_seen_v1";
+const SEEN_KEY = "idke_seen_v2";
 
-function shuffle(a) { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-function seenSet() { try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || "[]")); } catch(e){ return new Set(); } }
-function saveSeen(set) { try { localStorage.setItem(SEEN_KEY, JSON.stringify([...set])); } catch(e){} }
+function shuffle(a){ a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function loadSeen(){ try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || "[]")); } catch(e){ return new Set(); } }
+function saveSeen(s){ try { localStorage.setItem(SEEN_KEY, JSON.stringify([...s])); } catch(e){} }
 
+/* Picks 10 scenes you have NOT seen yet. Only when the unseen pool for a
+   difficulty level runs out does it recycle that level's scenes. */
 function pickGame() {
-  let seen = seenSet();
-  /* if nearly everything has been seen, reset memory so new games stay fresh */
-  if (BANK.filter((s,i)=>!seen.has(i)).length < 12) seen = new Set();
-  const used = new Set(), game = [];
-  let want = { ID:0, KE:0 };
+  let seen = loadSeen();
+  const used = new Set(), game = [], count = { ID:0, KE:0 };
+
   PLAN.forEach(level => {
-    let pool = BANK.map((s,i)=>({s,i})).filter(o => o.s.d === level && !used.has(o.i));
-    let fresh = pool.filter(o => !seen.has(o.i));
-    if (fresh.length) pool = fresh;
-    /* keep the country mix balanced so you cannot just guess the pattern */
-    const lean = want.ID > want.KE ? "KE" : want.KE > want.ID ? "ID" : null;
-    let pref = lean ? pool.filter(o => o.s.c === lean) : pool;
+    const levelAll = BANK.filter(s => s.d === level && !used.has(s.id));
+    let pool = levelAll.filter(s => !seen.has(s.id));
+    if (!pool.length) {                         /* this level is fully used up: recycle it */
+      levelAll.forEach(s => seen.delete(s.id));
+      pool = levelAll;
+    }
+    const lean = count.ID > count.KE ? "KE" : count.KE > count.ID ? "ID" : null;
+    let pref = lean ? pool.filter(s => s.c === lean) : pool;
     if (!pref.length) pref = pool;
     const pick = shuffle(pref)[0];
-    used.add(pick.i); want[pick.s.c]++; seen.add(pick.i);
-    game.push(pick.s);
+    used.add(pick.id); seen.add(pick.id); count[pick.c]++;
+    game.push(pick);
   });
+
   saveSeen(seen);
-  /* shuffle within each difficulty block so order is never predictable */
   const out = [];
   [1,2,3].forEach(l => out.push(...shuffle(game.filter(s => s.d === l))));
   return out;
@@ -324,15 +367,22 @@ function tick() {
 /* ---------- screens ---------- */
 function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList.remove("active")); $(id).classList.add("active"); }
 
+/* Tries the main photo, then the backup, then falls back to the gradient */
 function setBg(r) {
   const bg = $("bg");
   bg.classList.remove("zoom"); bg.style.opacity = 0;
   bg.style.backgroundImage = `linear-gradient(160deg, ${r.g[0]}, ${r.g[1]})`;
-  const im = new Image();
-  im.onload = () => { bg.style.backgroundImage = `url("${im.src}")`; bg.style.opacity = 1; void bg.offsetWidth; bg.classList.add("zoom"); };
-  im.onerror = () => { bg.style.opacity = 1; };
-  im.src = pic(r.img);
-  setTimeout(() => { bg.style.opacity = 1; }, 1500);
+  const sources = [r.img, r.alt].filter(Boolean);
+  let tried = 0;
+  const attempt = () => {
+    if (tried >= sources.length) { bg.style.opacity = 1; return; }
+    const im = new Image(); const src = pic(sources[tried++]);
+    im.onload = () => { bg.style.backgroundImage = `url("${im.src}")`; bg.style.opacity = 1; void bg.offsetWidth; bg.classList.add("zoom"); };
+    im.onerror = attempt;
+    im.src = src;
+  };
+  attempt();
+  setTimeout(() => { bg.style.opacity = 1; }, 2500);
 }
 
 function buildDots(){ $("dots").innerHTML = rounds.map(() => "<i></i>").join(""); }
@@ -391,7 +441,7 @@ function choose(letter) {
   setTimeout(() => $("reveal").classList.add("show"), 450);
 }
 
-function next() { cur++; if (cur >= rounds.length) return finish(); loadRound(); }
+function next(){ cur++; if (cur >= rounds.length) return finish(); loadRound(); }
 
 function finish() {
   $("reveal").classList.remove("show");
@@ -404,7 +454,9 @@ function finish() {
   else { rank = "Beginner Backpacker"; msg = "The equator tricked you this time. Time for a rematch."; }
   $("rank").textContent = `${rank}  (${right}/10 correct)`;
   $("endmsg").textContent = msg;
-  $("fooled").textContent = fooledBy.length ? "You were fooled by: " + [...new Set(fooledBy)].join(", ") + "." : "Nothing fooled you. Perfect run!";
+  $("fooled").textContent = fooledBy.length
+    ? "You were fooled by: " + [...new Set(fooledBy)].join(", ") + "."
+    : "Nothing fooled you. Perfect run!";
   show("end"); confetti(right >= 7 ? 260 : 60); beep([523,659,784,1047], .14);
 }
 
@@ -413,22 +465,35 @@ function start() {
   buildDots(); show("game"); loadRound();
 }
 
+function updateBankInfo() {
+  const seen = loadSeen();
+  const left = BANK.filter(s => !seen.has(s.id)).length;
+  $("bankInfo").textContent = BANK.length + " scenes in the bank. " + left + " you haven't seen yet.";
+}
+
 $("playBtn").onclick = start;
-$("againBtn").onclick = start;
+$("againBtn").onclick = () => { updateBankInfo(); start(); };
+$("resetBtn").onclick = () => {
+  try { localStorage.removeItem(SEEN_KEY); } catch(e){}
+  updateBankInfo();
+};
 $("ca").onclick = () => choose("A");
 $("cb").onclick = () => choose("B");
 $("nextBtn").onclick = next;
+
 addEventListener("keydown", e => {
   const k = e.key.toLowerCase();
   if ($("game").classList.contains("active")) {
     if (k === "a" || e.key === "ArrowLeft") choose("A");
     if (k === "b" || e.key === "ArrowRight") choose("B");
   }
-  if ((k === "enter" || k === " ") && locked && $("reveal").classList.contains("show")) { e.preventDefault(); next(); }
+  if ((k === "enter" || k === " ") && locked && $("reveal").classList.contains("show")) {
+    e.preventDefault(); next();
+  }
   if (k === "enter" && $("start").classList.contains("active")) start();
 });
 
-$("bankInfo").textContent = BANK.length + " scenes in the bank. Every game draws 10 fresh ones.";
+updateBankInfo();
 setBg(BANK[0]);
 </script>
 </body>

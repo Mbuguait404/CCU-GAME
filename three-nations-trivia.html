@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three Nations Trivia</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ke:#2fbf71; --sb:#27b5e8; --us:#ff6b5e; --gold:#ffd166; --ink:#0c1626; --line:rgba(255,255,255,.16); --glass:rgba(255,255,255,.08); }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; min-height:100%; }
+  body { font-family:'Fredoka',system-ui,sans-serif; color:#fff; background:var(--ink); overflow-x:hidden; }
+  .bgfx { position:fixed; inset:0; z-index:0; background:
+    radial-gradient(60vmax 60vmax at 6% 10%, rgba(47,191,113,.30), transparent 60%),
+    radial-gradient(60vmax 60vmax at 96% 18%, rgba(39,181,232,.28), transparent 60%),
+    radial-gradient(70vmax 70vmax at 50% 108%, rgba(255,107,94,.30), transparent 60%), var(--ink); }
+  .screen { display:none; position:relative; z-index:1; min-height:100vh; }
+  .screen.active { display:block; }
+  .wrap { max-width:900px; margin:0 auto; padding:26px 18px 70px; }
+
+  h1 { font-size:clamp(38px,8vw,78px); line-height:1.02; margin:6px 0 10px; text-shadow:0 6px 30px rgba(0,0,0,.4); }
+  h1 .k { color:var(--ke); } h1 .s { color:var(--sb); } h1 .u { color:var(--us); }
+  .sub { font-size:clamp(16px,2.4vw,22px); opacity:.85; max-width:640px; margin:0 0 28px; }
+  .modes { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px; }
+  .mode { text-align:left; font-family:inherit; color:#fff; cursor:pointer; background:var(--glass); border:1.5px solid var(--line);
+    border-radius:24px; padding:22px; backdrop-filter:blur(10px); transition:transform .15s, border-color .15s, background .15s; }
+  .mode:hover { transform:translateY(-4px); border-color:rgba(255,255,255,.5); background:rgba(255,255,255,.13); }
+  .mode .badge { display:inline-block; font-weight:700; font-size:14px; letter-spacing:.08em; padding:5px 14px; border-radius:999px; color:var(--ink); }
+  .mode h3 { font-size:26px; margin:14px 0 6px; } .mode p { margin:0; opacity:.78; font-size:16px; line-height:1.35; }
+  .foot { margin-top:30px; font-size:14px; opacity:.7; }
+  .linkbtn { background:none; border:0; color:#fff; font-family:inherit; text-decoration:underline; opacity:.8; cursor:pointer; font-size:14px; padding:0; }
+
+  .btn { font-family:inherit; font-size:22px; font-weight:700; color:var(--ink); background:var(--gold); border:0; border-radius:999px;
+    padding:14px 40px; cursor:pointer; box-shadow:0 7px 0 #c99a2e, 0 16px 28px rgba(0,0,0,.4); transition:transform .1s, box-shadow .1s; }
+  .btn:hover { transform:translateY(-2px); } .btn:active { transform:translateY(5px); box-shadow:0 2px 0 #c99a2e; }
+  .btn.small { font-size:18px; padding:10px 30px; }
+  .ghost { font-family:inherit; font-size:16px; font-weight:600; color:#fff; background:transparent; border:1.5px dashed var(--line); border-radius:14px; padding:10px 16px; cursor:pointer; }
+  .ghost:hover { border-color:#fff; }
+  .back { font-family:inherit; color:#fff; background:var(--glass); border:1px solid var(--line); border-radius:999px; padding:8px 18px; cursor:pointer; font-size:15px; }
+
+  .panel { background:var(--glass); border:1.5px solid var(--line); border-radius:22px; padding:20px; margin:16px 0; backdrop-filter:blur(10px); }
+  .panel h3 { margin:0 0 12px; font-size:20px; }
+  .lbl { font-size:14px; opacity:.75; margin:12px 0 6px; font-weight:500; }
+  .row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .dot { width:14px; height:14px; border-radius:50%; flex:none; }
+  .inp { width:100%; font-family:inherit; font-size:17px; color:#fff; background:rgba(0,0,0,.28); border:1.5px solid var(--line); border-radius:14px; padding:11px 14px; outline:none; }
+  .inp:focus { border-color:var(--gold); } .inp::placeholder { color:rgba(255,255,255,.4); }
+  .x { font-family:inherit; font-size:22px; line-height:1; color:#fff; background:rgba(255,255,255,.1); border:0; border-radius:10px; width:38px; height:38px; cursor:pointer; flex:none; }
+  .team { border-left:6px solid var(--c); background:rgba(0,0,0,.18); border-radius:16px; padding:12px 14px; margin-top:12px; display:grid; gap:8px; }
+  .team .tn { font-weight:700; font-size:18px; }
+  .seg { display:flex; gap:8px; flex-wrap:wrap; }
+  .sg { font-family:inherit; font-size:16px; font-weight:600; color:#fff; background:rgba(255,255,255,.08); border:1.5px solid var(--line); border-radius:999px; padding:8px 20px; cursor:pointer; }
+  .sg.on { background:var(--gold); color:var(--ink); border-color:var(--gold); }
+  .ctog { font-family:inherit; font-size:16px; font-weight:700; color:#fff; background:transparent; border:2px solid var(--c); border-radius:999px; padding:8px 18px; cursor:pointer; opacity:.55; }
+  .ctog.on { background:var(--c); color:var(--ink); opacity:1; }
+  .sw { font-family:inherit; font-size:16px; font-weight:600; color:#fff; background:rgba(255,255,255,.08); border:1.5px solid var(--line); border-radius:14px; padding:10px 16px; cursor:pointer; text-align:left; width:100%; }
+  .sw.on { border-color:var(--ke); background:rgba(47,191,113,.18); }
+  .hint { font-size:13px; opacity:.65; margin-top:8px; }
+  #err { color:#ff9c92; font-weight:600; min-height:24px; margin:8px 0; }
+
+  /* turn card */
+  #turn .wrap { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:10px; }
+  #turn .ring { width:150px; height:150px; border-radius:50%; border:10px solid var(--c); display:flex; align-items:center; justify-content:center;
+    font-size:60px; font-weight:700; box-shadow:0 0 60px var(--c); margin-bottom:12px; background:rgba(0,0,0,.25); }
+  #tTitle { font-size:18px; opacity:.75; letter-spacing:.08em; text-transform:uppercase; }
+  #tName { font-size:clamp(34px,7vw,64px); font-weight:700; line-height:1.05; }
+  #tSub { font-size:20px; opacity:.88; max-width:520px; margin-bottom:16px; }
+
+  /* play */
+  .play { max-width:900px; margin:0 auto; min-height:100vh; padding:14px 16px 24px; display:flex; flex-direction:column; gap:12px; }
+  .hud { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .pill { padding:6px 14px; border-radius:999px; font-weight:700; font-size:15px; background:rgba(0,0,0,.35); color:#fff; }
+  .pill.easy { background:#2e9e63; } .pill.medium { background:#e09a1a; } .pill.hard { background:#d63b3b; }
+  .sbrow { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { display:flex; align-items:center; gap:8px; padding:7px 14px; border-radius:999px; background:rgba(0,0,0,.3); border:2px solid transparent; font-weight:600; font-size:16px; }
+  .chip i { width:12px; height:12px; border-radius:50%; background:var(--c); }
+  .chip b { color:var(--gold); }
+  .chip.on { border-color:var(--c); background:rgba(255,255,255,.12); transform:scale(1.04); }
+  #who { font-size:17px; font-weight:600; opacity:.9; min-height:24px; }
+  #tbar { height:12px; background:rgba(255,255,255,.15); border-radius:999px; position:relative; overflow:hidden; }
+  #tfill { height:100%; width:100%; background:var(--ke); border-radius:999px; transition:width .1s linear, background .3s; }
+  #tbar.low #tfill { background:var(--us); }
+  #tnum { position:absolute; right:10px; top:-3px; font-size:13px; font-weight:700; }
+  #qCard { flex:1; display:flex; align-items:center; justify-content:center; text-align:center; min-height:150px;
+    background:var(--glass); border:1.5px solid var(--line); border-left:8px solid var(--c); border-radius:26px; padding:24px 22px; backdrop-filter:blur(10px); }
+  #qText { font-size:clamp(22px,4.2vw,38px); font-weight:600; line-height:1.25; }
+  #opts { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .opt { font-family:inherit; color:#fff; font-size:clamp(16px,2.6vw,22px); font-weight:600; text-align:left; display:flex; align-items:center; gap:12px;
+    background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.06)); border:2px solid var(--line); border-radius:20px; padding:16px 16px; cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,.28); transition:transform .1s, background .2s, opacity .3s; min-height:74px; }
+  .opt:hover:not(:disabled) { transform:translateY(-3px); border-color:#fff; }
+  .opt:active:not(:disabled) { transform:translateY(4px); box-shadow:0 1px 0 rgba(0,0,0,.28); }
+  .opt:disabled { cursor:default; }
+  .ltr { flex:none; width:36px; height:36px; border-radius:50%; background:var(--gold); color:var(--ink); display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .opt.right { background:linear-gradient(160deg,#2fd18f,#138a5b); border-color:#9bf5cf; animation:pop .5s; }
+  .opt.wrong { background:linear-gradient(160deg,#ff6b5e,#b5302a); border-color:#ffb3ab; animation:shake .35s; }
+  .opt.dim { opacity:.35; }
+  @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-9px)} 75%{transform:translateX(9px)} }
+
+  /* sheet + toast */
+  #sheet { position:fixed; left:50%; bottom:0; z-index:20; width:min(680px,100%); transform:translate(-50%,115%); transition:transform .4s cubic-bezier(.2,.9,.3,1.15);
+    background:rgba(12,22,38,.97); backdrop-filter:blur(12px); border-radius:28px 28px 0 0; padding:22px 24px 26px; text-align:center; box-shadow:0 -18px 50px rgba(0,0,0,.55); }
+  #sheet.show { transform:translate(-50%,0); }
+  #shV { font-size:36px; font-weight:700; margin:0; } #shV.good { color:#52e6a0; } #shV.bad { color:#ff7d71; }
+  #shP { color:var(--gold); font-weight:700; font-size:18px; margin:2px 0 8px; min-height:24px; }
+  #shT { display:inline-block; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:4px 12px; border-radius:999px; margin-bottom:8px; color:var(--ink); }
+  #shA { font-size:22px; font-weight:700; } #shF { margin:8px 0 16px; opacity:.88; font-size:17px; line-height:1.4; }
+  #toast { position:fixed; top:18px; left:50%; transform:translate(-50%,-300%); visibility:hidden; z-index:30; background:var(--gold); color:var(--ink); font-weight:700; padding:12px 22px; border-radius:999px; transition:transform .35s, visibility .35s; max-width:92%; text-align:center; }
+  #toast.show { transform:translate(-50%,0); visibility:visible; }
+
+  /* end */
+  #end .wrap { text-align:center; }
+  #eTitle { font-size:clamp(32px,6.5vw,58px); margin:8px 0 2px; } #eSub { opacity:.85; font-size:19px; margin:0 0 20px; }
+  .rrow { display:flex; align-items:center; gap:14px; text-align:left; background:var(--glass); border:2px solid var(--line); border-left:8px solid var(--c); border-radius:18px; padding:12px 16px; margin:10px 0; }
+  .rrow.win { border-color:var(--gold); border-left-color:var(--c); background:rgba(255,209,102,.12); }
+  .pos { font-size:28px; font-weight:700; width:44px; text-align:center; color:var(--gold); }
+  .rn { flex:1; } .rn b { font-size:21px; } .rn small, .rs small { display:block; opacity:.7; font-size:14px; }
+  .rs { text-align:right; } .rs b { font-size:28px; color:var(--gold); }
+  .bar { text-align:left; margin:10px 0; } .bar .bl { display:flex; justify-content:space-between; font-weight:600; font-size:15px; margin-bottom:4px; }
+  .bar .bt { height:12px; background:rgba(255,255,255,.14); border-radius:999px; overflow:hidden; } .bar .bt i { display:block; height:100%; border-radius:999px; }
+  .endbtns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:24px; }
+  canvas#fx { position:fixed; inset:0; z-index:40; pointer-events:none; }
+  @media (max-width:560px) { #opts { grid-template-columns:1fr; } .opt { min-height:62px; padding:12px; } }
+</style>
+</head>
+<body>
+<div class="bgfx"></div>
+<canvas id="fx"></canvas>
+<div id="toast"></div>
+
+<!-- HOME -->
+<section class="screen active" id="home"><div class="wrap">
+  <h1><span class="k">Kenya</span><br><span class="s">Solomon Islands</span><br><span class="u">USA</span></h1>
+  <p class="sub">A trivia night across three countries. Play solo, go head to head, or form teams and battle it out.</p>
+  <div class="modes">
+    <button class="mode" data-mode="solo"><span class="badge" style="background:var(--gold)">SOLO</span><h3>Single player</h3><p>Beat your own score and see which country you know best.</p></button>
+    <button class="mode" data-mode="pvp"><span class="badge" style="background:var(--sb)">1 VS 1</span><h3>Person vs person</h3><p>2 to 6 players take turns on one screen. Wrong answers can be stolen.</p></button>
+    <button class="mode" data-mode="team"><span class="badge" style="background:var(--us)">TEAMS</span><h3>Team vs team</h3><p>2 to 4 teams, with up to 2 or 3 players each. Talk it over, then answer.</p></button>
+  </div>
+  <p class="foot"><span id="bankInfo"></span> <button class="linkbtn" id="resetSeen">Reset question memory</button></p>
+</div></section>
+
+<!-- SETUP -->
+<section class="screen" id="setup"><div class="wrap">
+  <button class="back" data-act="back">&larr; Back</button>
+  <h2 id="setupTitle" style="font-size:34px;margin:14px 0 0"></h2>
+  <div id="setupBody"></div>
+  <div id="err"></div>
+  <button class="btn" data-act="go">Start game</button>
+</div></section>
+
+<!-- TURN CARD -->
+<section class="screen" id="turn"><div class="wrap">
+  <div class="ring" id="tRing">?</div>
+  <div id="tTitle"></div>
+  <div id="tName"></div>
+  <div id="tSub"></div>
+  <button class="btn" id="tBtn">I'm ready</button>
+</div></section>
+
+<!-- PLAY -->
+<section class="screen" id="play"><div class="play">
+  <div class="hud"><span class="pill" id="hudQ"></span><span class="pill" id="hudC"></span><span class="pill" id="hudD"></span></div>
+  <div class="sbrow" id="sbRow"></div>
+  <div id="who"></div>
+  <div id="tbar"><div id="tfill"></div><span id="tnum"></span></div>
+  <div id="qCard"><div id="qText"></div></div>
+  <div id="opts"></div>
+</div></section>
+
+<div id="sheet">
+  <h2 id="shV"></h2><div id="shP"></div><div id="shT"></div><div id="shA"></div><div id="shF"></div>
+  <button class="btn small" id="shN">Next question</button>
+</div>
+
+<!-- END -->
+<section class="screen" id="end"><div class="wrap" id="endBody"></div></section>
+
+<script>
+/* =====================================================================
+   QUESTION BANK
+   Q(id, countries, difficulty 1-3, question, correct answer, [wrong answers], fun fact)
+   countries: "KE", "SB", "US", or several joined by commas for cross-country
+   questions (these only appear when ALL their countries are switched on).
+   Never change an id once used: it powers the no-repeat memory.
+   ===================================================================== */
+const Q=(id,c,d,q,a,w,f)=>({id,c:c.split(","),d,q,a,w,f});
+const BANK=[
+ /* ---------------- KENYA ---------------- */
+ Q(1,"KE",1,"What is the capital of Kenya?","Nairobi",["Mombasa","Kisumu","Nakuru"],"Nairobi is famous for having a national park right next to its skyscrapers."),
+ Q(2,"KE",1,"Which mountain gives Kenya its name?","Mount Kenya",["Mount Kilimanjaro","Mount Elgon","Mount Meru"],"At 5,199 m it is the second-highest mountain in Africa, and it sits almost on the equator."),
+ Q(3,"KE",1,"What does 'simba' mean in Swahili?","Lion",["Elephant","Giraffe","Buffalo"],"Swahili is one of Kenya's two official languages."),
+ Q(4,"KE",1,"Which Kenyan staple is a stiff porridge made from maize flour?","Ugali",["Injera","Fufu","Couscous"],"Ugali is often eaten with sukuma wiki, a dish of sauteed collard greens."),
+ Q(5,"KE",1,"Every year huge herds of wildebeest cross which river between Kenya and Tanzania?","The Mara River",["The Nile","The Tana River","The Zambezi"],"More than a million wildebeest take part in the Great Migration."),
+ Q(6,"KE",1,"Which of these animals is NOT one of Africa's famous 'Big Five'?","Giraffe",["Leopard","Cape buffalo","Rhinoceros"],"The Big Five are lion, leopard, elephant, rhino and buffalo."),
+ Q(7,"KE",1,"What is the currency of Kenya?","Kenyan shilling",["Kenyan dollar","Kenyan birr","Kenyan naira"],"The shilling is divided into 100 cents."),
+ Q(8,"KE",1,"'Jambo' is a friendly greeting in which language?","Swahili",["Hawaiian","Amharic","Zulu"],"Swahili is spoken by tens of millions of people across East Africa."),
+ Q(9,"KE",2,"In which year did Kenya gain independence from Britain?","1963",["1957","1960","1971"],"Kenya celebrates Jamhuri Day every 12 December."),
+ Q(10,"KE",2,"Who was Kenya's first president?","Jomo Kenyatta",["Daniel arap Moi","Mwai Kibaki","Tom Mboya"],"Kenyatta led the country from independence until his death in 1978."),
+ Q(11,"KE",2,"Which Kenyan won the 2004 Nobel Peace Prize for her tree-planting movement?","Wangari Maathai",["Lupita Nyong'o","Grace Ogot","Catherine Ndereba"],"She was the first African woman to win the Nobel Peace Prize, and her Green Belt Movement has planted tens of millions of trees."),
+ Q(12,"KE",2,"Which Kenyan runner became the first person to run a marathon in under two hours, in a special 2019 event?","Eliud Kipchoge",["David Rudisha","Kipchoge Keino","Geoffrey Mutai"],"He ran 1:59:40 in Vienna. It was not an official world record because of the pacing setup."),
+ Q(13,"KE",2,"Which mobile money service, launched in Kenya in 2007, became famous worldwide?","M-Pesa",["Zelle","Alipay","Venmo"],"'Pesa' is Swahili for money."),
+ Q(14,"KE",2,"Which huge lake in northern Kenya is nicknamed the Jade Sea?","Lake Turkana",["Lake Victoria","Lake Naivasha","Lake Baringo"],"It is the world's largest permanent desert lake."),
+ Q(15,"KE",2,"What does Kenya's national motto 'Harambee' mean?","Let's all pull together",["Freedom forever","Welcome home","Land of lions"],"It is written on the national coat of arms."),
+ Q(16,"KE",2,"Kenya's flag shows a traditional shield and two crossed what?","Spears",["Swords","Arrows","Drums"],"The black, red, green and white colors stand for the people, the struggle for freedom, the land and peace."),
+ Q(17,"KE",2,"What is 'nyama choma'?","Roasted meat",["Fried bananas","Spiced tea","Coconut rice"],"It is often grilled over charcoal and shared with friends."),
+ Q(18,"KE",2,"Which two languages are the official languages of Kenya?","English and Swahili",["Swahili and Arabic","English and Kikuyu","French and Swahili"],"Kenyans also speak dozens of local languages, such as Kikuyu, Luo and Kamba."),
+ Q(19,"KE",2,"Which Kenyan national park is famous for elephants against the backdrop of Mount Kilimanjaro?","Amboseli",["Lake Nakuru","Hell's Gate","Aberdare"],"Kilimanjaro itself is just across the border in Tanzania."),
+ Q(20,"KE",2,"The Maasai Mara in Kenya continues south into which famous Tanzanian park?","Serengeti",["Selous","Ruaha","Mikumi"],"Together they form one giant ecosystem."),
+ Q(21,"KE",2,"What is the name of Kenya's biggest port city on the Indian Ocean?","Mombasa",["Malindi","Lamu","Eldoret"],"Its port also serves landlocked neighbors such as Uganda."),
+ Q(22,"KE",3,"The name 'Nairobi' comes from a Maasai phrase meaning what?","Place of cool waters",["Place of lions","Red earth","The big river"],"The phrase is 'Enkare Nairobi'."),
+ Q(23,"KE",3,"Which Kenyan old town is a UNESCO World Heritage Site and one of the oldest Swahili settlements still lived in?","Lamu",["Malindi","Kilifi","Eldoret"],"Cars are rare there. Donkeys and dhows are the main transport."),
+ Q(24,"KE",3,"Which giant geological feature runs through Kenya and created lakes such as Nakuru and Naivasha?","The Great Rift Valley",["The Congo Basin","The Atlas Mountains","The Sahel"],"It stretches thousands of kilometres across East Africa."),
+
+ /* ---------------- SOLOMON ISLANDS ---------------- */
+ Q(30,"SB",1,"What is the capital of the Solomon Islands?","Honiara",["Port Moresby","Suva","Port Vila"],"Honiara is on the island of Guadalcanal."),
+ Q(31,"SB",1,"In which ocean do the Solomon Islands lie?","The Pacific Ocean",["The Indian Ocean","The Atlantic Ocean","The Arctic Ocean"],"The country has close to a thousand islands."),
+ Q(32,"SB",1,"Which large country lies just to the northwest of the Solomon Islands?","Papua New Guinea",["Australia","Fiji","Indonesia"],"The two countries are close neighbors in Melanesia."),
+ Q(52,"SB",1,"The Solomon Islands belong to which region of the Pacific?","Melanesia",["Polynesia","Micronesia","Scandinavia"],"Papua New Guinea, Vanuatu and Fiji are also in Melanesia."),
+ Q(53,"SB",1,"The Solomon Islands are famous with divers for which underwater attractions?","Coral reefs and WWII wrecks",["Ice caves","Kelp forests","Hot-spring geysers"],"Warm, clear water makes it a top spot for scuba diving."),
+ Q(33,"SB",2,"In which year did the Solomon Islands become independent from the United Kingdom?","1978",["1968","1975","1983"],"Independence Day is celebrated on 7 July."),
+ Q(34,"SB",2,"The WWII Guadalcanal campaign of 1942 to 1943 took place in which present-day country?","Solomon Islands",["Fiji","Vanuatu","Papua New Guinea"],"It was one of the first major Allied offensives against Japan in the Pacific."),
+ Q(35,"SB",2,"What is the common language used between Solomon Islanders from different islands?","Solomon Islands Pijin",["Tok Pisin","Bislama","Fijian"],"English is the official language, but dozens of local languages are spoken."),
+ Q(36,"SB",2,"In Solomon Islands Pijin, what does 'tagio' mean?","Thank you",["Hello","Goodbye","Sorry"],"'Tagio tumas' means thank you very much."),
+ Q(37,"SB",2,"What is the currency of the Solomon Islands?","Solomon Islands dollar",["Fijian dollar","Kina","Pacific franc"],"The kina belongs to Papua New Guinea."),
+ Q(38,"SB",2,"How many white stars appear on the Solomon Islands flag?","Five",["Three","Seven","Nine"],"The stars stand for the main island groups of the country."),
+ Q(39,"SB",2,"Which major sporting event did Honiara host in 2023?","The Pacific Games",["The Olympic Games","The Commonwealth Games","The Rugby World Cup"],"Athletes from across Oceania came to Honiara for the Games."),
+ Q(40,"SB",2,"Which starchy root vegetable is a staple food across the Solomon Islands?","Taro",["Teff","Wheat","Rye"],"Sweet potato and cassava are also widely grown."),
+ Q(41,"SB",2,"Which is the largest island of the Solomon Islands by area?","Guadalcanal",["Malaita","Makira","Choiseul"],"The country's highest mountain also sits on this island."),
+ Q(42,"SB",3,"Marovo Lagoon in the Solomons is famous as what?","One of the world's largest saltwater lagoons",["A giant freshwater swamp","An active volcano crater","The country's tallest waterfall"],"It has a double barrier of islands and reefs, and the area is known for woodcarving."),
+ Q(43,"SB",3,"East Rennell is a UNESCO World Heritage Site. What kind of place is it?","One of the largest raised coral atolls in the world",["A floating volcano","A glacier valley","A mangrove island chain"],"It is home to Lake Tegano and many species found nowhere else."),
+ Q(44,"SB",3,"What is the highest mountain in the Solomon Islands?","Mount Popomanaseu",["Mount Wilhelm","Mount Victoria","Mount Tambora"],"It rises about 2,335 m on Guadalcanal."),
+ Q(45,"SB",3,"In 1568 explorer Alvaro de Mendana named the islands after which legendary king, hoping to find his gold?","King Solomon",["King Midas","King Arthur","Montezuma"],"The gold turned out to be a myth."),
+ Q(46,"SB",3,"Who is the head of state of the Solomon Islands?","The British monarch (King Charles III)",["An elected president","The Australian prime minister","A council of chiefs"],"The country is a Commonwealth realm, with a Governor-General representing the monarch."),
+ Q(47,"SB",3,"What is the sound between Guadalcanal and the Florida Islands, nicknamed for its many WWII shipwrecks?","Ironbottom Sound",["Coral Cemetery","Shark Channel","Gold Passage"],"Dozens of ships were sunk there in 1942 and 1943."),
+ Q(48,"SB",3,"The Solomon Islands sit on which earthquake-prone zone of the Pacific?","The Ring of Fire",["The Mid-Atlantic Ridge","The Great Rift Valley","The Himalayan Belt"],"Earthquakes and volcanoes are a part of life across the region."),
+ Q(49,"SB",3,"Honiara's international airport was a famous WWII airfield. What was it called?","Henderson Field",["Wheeler Field","Clark Field","Bellows Field"],"US Marines captured it in August 1942 and held it through months of fighting."),
+ Q(50,"SB",3,"Panpipe ensembles from which Solomon Islands island have been recorded by researchers around the world?","Malaita",["Guadalcanal","Rennell","Choiseul"],"The 'Are'are people are famous for their panpipe music."),
+
+ /* ---------------- USA ---------------- */
+ Q(60,"US",1,"What is the capital of the United States?","Washington, D.C.",["New York City","Philadelphia","Los Angeles"],"It is named after the first president, George Washington."),
+ Q(61,"US",1,"How many states are in the United States?","50",["48","52","51"],"Hawaii was the 50th state, joining in 1959."),
+ Q(62,"US",1,"Which country gave the Statue of Liberty to the United States?","France",["Britain","Spain","Italy"],"It was dedicated in New York Harbor in 1886."),
+ Q(63,"US",1,"Which is the largest US state by area?","Alaska",["Texas","California","Montana"],"Alaska is more than twice the size of Texas."),
+ Q(64,"US",1,"Which US city is nicknamed 'the Big Apple'?","New York City",["Chicago","Boston","Los Angeles"],"More than eight million people live in New York City."),
+ Q(65,"US",1,"The Golden Gate Bridge is in which city?","San Francisco",["Seattle","San Diego","Portland"],"It opened in 1937."),
+ Q(66,"US",1,"Which US state is nicknamed the Sunshine State?","Florida",["California","Arizona","Hawaii"],"California, a common guess, is the Golden State."),
+ Q(67,"US",1,"Which holiday falls on the fourth Thursday of November in the US?","Thanksgiving",["Independence Day","Memorial Day","Labor Day"],"In 2026 it lands on 26 November."),
+ Q(81,"US",1,"In which year was the US Declaration of Independence adopted?","1776",["1765","1783","1789"],"The date, 4 July, is celebrated every year."),
+ Q(68,"US",2,"Which river is the longest in the United States?","The Missouri River",["The Mississippi River","The Colorado River","The Ohio River"],"Many people guess the Mississippi, but the Missouri is longer."),
+ Q(69,"US",2,"Which park is widely seen as the first national park in the world, founded in 1872?","Yellowstone",["Yosemite","Grand Canyon","Glacier"],"It is famous for its geysers, including Old Faithful."),
+ Q(70,"US",2,"In which year did Apollo 11 land the first humans on the Moon?","1969",["1961","1972","1975"],"Neil Armstrong and Buzz Aldrin walked on the surface."),
+ Q(71,"US",2,"In which state is Mount Rushmore?","South Dakota",["Wyoming","Montana","Colorado"],"It shows the faces of Washington, Jefferson, Theodore Roosevelt and Lincoln."),
+ Q(72,"US",2,"In which country was basketball invented in 1891?","The United States",["Canada","England","Brazil"],"Inventor James Naismith was Canadian, but he created the game in Massachusetts."),
+ Q(73,"US",2,"What is the tallest mountain in the United States?","Denali",["Mount Whitney","Mount Rainier","Pikes Peak"],"Denali in Alaska is about 6,190 m tall."),
+ Q(74,"US",2,"In 1867 the US bought Alaska from which country?","Russia",["Canada","Britain","Spain"],"The price was about 7.2 million dollars."),
+ Q(75,"US",2,"Which city is considered the birthplace of jazz?","New Orleans",["Chicago","Memphis","Nashville"],"Jazz grew out of the city's blend of musical traditions."),
+ Q(76,"US",2,"How many Great Lakes are there?","Five",["Three","Four","Seven"],"Lake Michigan is the only one entirely inside the US."),
+ Q(77,"US",2,"Which US state has the largest population?","California",["Texas","Florida","New York"],"About 39 million people live there."),
+ Q(78,"US",2,"Which document begins with the words 'We the People'?","The Constitution",["The Declaration of Independence","The Bill of Rights","The Gettysburg Address"],"It was signed in 1787."),
+ Q(79,"US",2,"Which US city is nicknamed 'Motor City'?","Detroit",["Houston","Atlanta","Cleveland"],"It grew up around the American car industry."),
+ Q(80,"US",3,"Which was the 50th US state to join the Union?","Hawaii",["Alaska","Arizona","New Mexico"],"Alaska joined earlier in 1959 as the 49th."),
+
+ /* ---------------- CROSS-COUNTRY ---------------- */
+ Q(90,"US,KE",2,"Barack Obama's father came from which country?","Kenya",["Tanzania","Uganda","Nigeria"],"Barack Obama Sr. was born in western Kenya."),
+ Q(91,"SB,US",2,"John F. Kennedy's boat PT-109 was sunk in 1943 near which islands?","The Solomon Islands",["The Philippines","Hawaii","The Aleutian Islands"],"Two Solomon Islander scouts, Biuku Gasa and Eroni Kumana, helped save Kennedy and his crew."),
+ Q(92,"KE,SB",2,"Kenya and the Solomon Islands both belong to which organisation, which the USA has never joined?","The Commonwealth of Nations",["NATO","The European Union","ASEAN"],"The Commonwealth has 56 member countries."),
+ Q(93,"KE,SB,US",1,"Which of these three countries is crossed by the equator?","Kenya",["The Solomon Islands","The United States","None of them"],"The equator passes close to the town of Nanyuki, near Mount Kenya."),
+ Q(94,"KE,SB,US",1,"Which of these three countries has the largest population?","The United States",["Kenya","The Solomon Islands"],"The US has over 330 million people, Kenya more than 50 million, and the Solomon Islands under a million."),
+ Q(95,"KE,SB,US",2,"Which of these three countries is made up of nearly a thousand islands?","The Solomon Islands",["Kenya","The United States"],"Hawaii is an island state, but the Solomons are an entire island nation."),
+ Q(96,"KE,SB,US",2,"Which of these three capital cities is closest to the equator?","Nairobi",["Honiara","Washington, D.C."],"Nairobi is about 1 degree south of the equator, Honiara about 9 degrees south, and Washington, D.C. about 39 degrees north.")
+];
+
+/* =====================================================================
+   GAME CODE
+   ===================================================================== */
+const CNAME={KE:"Kenya",SB:"Solomon Islands",US:"USA"};
+const CCOL={KE:"#2fbf71",SB:"#27b5e8",US:"#ff6b5e",X:"#ffd166"};
+const COLORS=["#ff6b5e","#2fd18f","#5aa9ff","#ffd166","#c58bff","#ff9ecb"];
+const TEAM_DEFAULTS=["Lions","Eagles","Dolphins","Sharks"];
+const SEEN_KEY="trivia3_seen_v1", CFG_KEY="trivia3_cfg_v1";
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function loadSeen(){try{return new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||"[]"));}catch(e){return new Set();}}
+function saveSeen(s){try{localStorage.setItem(SEEN_KEY,JSON.stringify([...s]));}catch(e){}}
+
+function defaultCfg(){return{mode:"team",solo:"",players:["",""],teamMax:3,
+  teams:[0,1].map(i=>({name:TEAM_DEFAULTS[i],players:["","",""]})),nQ:15,timer:20,cs:{KE:true,SB:true,US:true},steal:true};}
+let cfg=defaultCfg();
+try{
+  const sv=JSON.parse(localStorage.getItem(CFG_KEY)||"null");
+  if(sv&&typeof sv==="object"){
+    cfg=Object.assign(defaultCfg(),sv);
+    if(!Array.isArray(cfg.teams)||cfg.teams.length<2||cfg.teams.length>4)cfg.teams=defaultCfg().teams;
+    cfg.teams.forEach((t,i)=>{if(!Array.isArray(t.players))t.players=["","",""];while(t.players.length<3)t.players.push("");if(!t.name)t.name=TEAM_DEFAULTS[i];});
+    if(!Array.isArray(cfg.players)||cfg.players.length<2||cfg.players.length>6)cfg.players=["",""];
+    if(![2,3].includes(cfg.teamMax))cfg.teamMax=3;
+    if(!cfg.cs||typeof cfg.cs!=="object")cfg.cs={KE:true,SB:true,US:true};
+  }
+}catch(e){cfg=defaultCfg();}
+function saveCfg(){try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}catch(e){}}
+
+/* ---------- sound + confetti ---------- */
+let actx;
+function beep(freqs,dur=.12,type="sine",vol=.12){
+  try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();
+    freqs.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);
+      const t=actx.currentTime+i*dur;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.start(t);o.stop(t+dur);});}catch(e){}
+}
+const cv=$("fx"),cx=cv.getContext("2d");let bits=[];
+function sizeCv(){cv.width=innerWidth;cv.height=innerHeight;}addEventListener("resize",sizeCv);sizeCv();
+function confetti(n=120){
+  const cols=["#ffd166","#ff6b5e","#2fbf71","#27b5e8","#fff"],was=bits.length;
+  for(let i=0;i<n;i++)bits.push({x:innerWidth/2,y:innerHeight*.55,vx:(Math.random()-.5)*16,vy:-Math.random()*16-4,s:Math.random()*8+4,c:cols[i%cols.length],r:Math.random()*6,vr:(Math.random()-.5)*.4,life:120});
+  if(!was)tick();
+}
+function tick(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  bits.forEach(b=>{b.vy+=.5;b.x+=b.vx;b.y+=b.vy;b.r+=b.vr;b.life--;cx.save();cx.translate(b.x,b.y);cx.rotate(b.r);cx.fillStyle=b.c;cx.fillRect(-b.s/2,-b.s/2,b.s,b.s*.6);cx.restore();});
+  bits=bits.filter(b=>b.life>0&&b.y<innerHeight+30);
+  if(bits.length)requestAnimationFrame(tick);else cx.clearRect(0,0,cv.width,cv.height);
+}
+let toastT;
+function toast(msg,ms=1700){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),ms);}
+
+/* ---------- screens ---------- */
+const isActive=id=>$(id).classList.contains("active");
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));$(id).classList.add("active");window.scrollTo(0,0);}
+
+/* ---------- home ---------- */
+function updateHome(){
+  const seen=loadSeen(),left=BANK.filter(q=>!seen.has(q.id)).length;
+  $("bankInfo").textContent=BANK.length+" questions in the bank, "+left+" you haven't seen yet.";
+}
+$("home").addEventListener("click",e=>{
+  const m=e.target.closest("[data-mode]");
+  if(m){cfg.mode=m.dataset.mode;$("err").textContent="";renderSetup();show("setup");}
+});
+$("resetSeen").onclick=()=>{try{localStorage.removeItem(SEEN_KEY);}catch(e){}updateHome();toast("Question memory cleared");};
+
+/* ---------- setup ---------- */
+const seg=(id,opts,cur)=>`<div class="seg">${opts.map(o=>`<button class="sg ${o.v===cur?"on":""}" data-act="seg" data-id="${id}" data-v="${o.v}">${o.l}</button>`).join("")}</div>`;
+function setTeams(n){
+  while(cfg.teams.length<n)cfg.teams.push({name:TEAM_DEFAULTS[cfg.teams.length],players:["","",""]});
+  cfg.teams.length=n;
+}
+function eligible(sel){return BANK.filter(q=>q.c.every(c=>sel.includes(c)));}
+function renderSetup(){
+  const m=cfg.mode;
+  $("setupTitle").textContent=m==="solo"?"Single player":m==="pvp"?"Person vs person":"Team vs team";
+  let h=`<div class="panel"><h3>${m==="solo"?"Your name":m==="pvp"?"Players (2 to 6)":"Teams"}</h3>`;
+  if(m==="solo"){
+    h+=`<input class="inp" data-k="solo" maxlength="18" placeholder="Your name" value="${esc(cfg.solo)}">`;
+  }else if(m==="pvp"){
+    cfg.players.forEach((p,i)=>{
+      h+=`<div class="row"><span class="dot" style="background:${COLORS[i]}"></span><input class="inp" data-k="p:${i}" maxlength="18" placeholder="Player ${i+1}" value="${esc(p)}">${cfg.players.length>2?`<button class="x" data-act="rmp" data-i="${i}">&times;</button>`:""}</div>`;
+    });
+    if(cfg.players.length<6)h+=`<button class="ghost" data-act="addp">+ Add player</button>`;
+  }else{
+    h+=`<div class="lbl">Maximum players per team</div>`+seg("teamMax",[{v:2,l:"2 players"},{v:3,l:"3 players"}],cfg.teamMax);
+    h+=`<div class="lbl">Number of teams</div>`+seg("nTeams",[{v:2,l:"2"},{v:3,l:"3"},{v:4,l:"4"}],cfg.teams.length);
+    cfg.teams.forEach((t,i)=>{
+      h+=`<div class="team" style="--c:${COLORS[i]}"><input class="inp tn" data-k="tn:${i}" maxlength="18" placeholder="Team name" value="${esc(t.name)}">`;
+      for(let j=0;j<cfg.teamMax;j++)h+=`<input class="inp" data-k="tp:${i}:${j}" maxlength="18" placeholder="Player ${j+1}${j===0?"":" (optional)"}" value="${esc(t.players[j]||"")}">`;
+      h+=`</div>`;
+    });
+    h+=`<div class="hint">Teams can have fewer players than the maximum. Players on a team take turns answering.</div>`;
+  }
+  h+=`</div><div class="panel"><h3>Game settings</h3>`;
+  h+=`<div class="lbl">Number of questions</div>`+seg("nQ",[{v:10,l:"10"},{v:15,l:"15"},{v:20,l:"20"}],cfg.nQ);
+  h+=`<div class="lbl">Time per question</div>`+seg("timer",[{v:0,l:"No timer"},{v:15,l:"15 s"},{v:20,l:"20 s"},{v:30,l:"30 s"}],cfg.timer);
+  h+=`<div class="lbl">Countries in play</div><div class="seg">`+["KE","SB","US"].map(c=>`<button class="ctog ${cfg.cs[c]?"on":""}" style="--c:${CCOL[c]}" data-act="ctog" data-c="${c}">${CNAME[c]}</button>`).join("")+`</div>`;
+  if(m!=="solo"){
+    h+=`<div class="lbl">Steal rule</div><button class="sw ${cfg.steal?"on":""}" data-act="steal">${cfg.steal?"ON":"OFF"}: if you miss, the next ${m==="team"?"team":"player"} can steal it for half points</button>`;
+  }
+  const sel=Object.keys(cfg.cs).filter(k=>cfg.cs[k]);
+  h+=`<div class="hint">${eligible(sel).length} questions available with these countries. Questions you have already seen are skipped until the bank runs out.</div></div>`;
+  $("setupBody").innerHTML=h;
+}
+$("setup").addEventListener("input",e=>{
+  const k=e.target.dataset.k;if(!k)return;
+  const p=k.split(":"),v=e.target.value;
+  if(p[0]==="solo")cfg.solo=v;
+  else if(p[0]==="p")cfg.players[+p[1]]=v;
+  else if(p[0]==="tn")cfg.teams[+p[1]].name=v;
+  else if(p[0]==="tp")cfg.teams[+p[1]].players[+p[2]]=v;
+});
+$("setup").addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const a=b.dataset.act;
+  if(a==="back"){show("home");return;}
+  if(a==="go"){startFromSetup();return;}
+  if(a==="addp"&&cfg.players.length<6)cfg.players.push("");
+  else if(a==="rmp"&&cfg.players.length>2)cfg.players.splice(+b.dataset.i,1);
+  else if(a==="seg"){
+    const id=b.dataset.id,v=+b.dataset.v;
+    if(id==="teamMax")cfg.teamMax=v;else if(id==="nTeams")setTeams(v);else if(id==="nQ")cfg.nQ=v;else if(id==="timer")cfg.timer=v;
+  }else if(a==="ctog"){
+    const c=b.dataset.c,on=Object.keys(cfg.cs).filter(k=>cfg.cs[k]);
+    if(cfg.cs[c]&&on.length===1)toast("Keep at least one country on");else cfg.cs[c]=!cfg.cs[c];
+  }else if(a==="steal")cfg.steal=!cfg.steal;
+  renderSetup();
+});
+
+/* ---------- building a game ---------- */
+let S=null,G=null;
+function mkEnt(name,players,i){return{name,players,color:COLORS[i%COLORS.length],score:0,streak:0,asked:0,right:0,stealTry:0,stolen:0,ps:{}};}
+function buildQuestions(sel,n){
+  const pool=eligible(sel);let seen=loadSeen();
+  if(pool.every(q=>seen.has(q.id)))pool.forEach(q=>seen.delete(q.id));
+  const ne=Math.round(n*.4),nm=Math.round(n*.35),nh=n-ne-nm;
+  const plan=[...Array(ne).fill(1),...Array(nm).fill(2),...Array(nh).fill(3)];
+  const order=shuffle(sel),used=new Set(),out=[];let k=0;
+  plan.forEach(d=>{
+    const want=order[k++%order.length],free=pool.filter(q=>!used.has(q.id));
+    const tiers=[q=>q.c[0]===want&&q.d===d,q=>q.c.includes(want)&&q.d===d,q=>q.d===d,q=>q.c[0]===want,q=>true];
+    let pick=null;
+    for(const t of tiers){
+      const c=free.filter(t);if(!c.length)continue;
+      const fresh=c.filter(q=>!seen.has(q.id));
+      pick=shuffle(fresh.length?fresh:c)[0];break;
+    }
+    used.add(pick.id);seen.add(pick.id);out.push({q:pick,opts:shuffle([pick.a,...pick.w])});
+  });
+  saveSeen(seen);
+  return out;
+}
+function startFromSetup(){
+  const sel=Object.keys(cfg.cs).filter(k=>cfg.cs[k]);
+  const avail=eligible(sel).length;
+  if(avail<5){$("err").textContent="Not enough questions for that country mix. Switch on more countries.";return;}
+  $("err").textContent="";
+  let ents=[];
+  if(cfg.mode==="solo"){const nm=cfg.solo.trim()||"Player";ents=[mkEnt(nm,[nm],0)];}
+  else if(cfg.mode==="pvp"){ents=cfg.players.map((p,i)=>{const nm=p.trim()||"Player "+(i+1);return mkEnt(nm,[nm],i);});}
+  else{
+    ents=cfg.teams.map((t,i)=>{
+      const pl=t.players.slice(0,cfg.teamMax).map(x=>x.trim()).filter(Boolean);
+      return mkEnt(t.name.trim()||"Team "+(i+1),pl.length?pl:["Team member"],i);
+    });
+  }
+  saveCfg();
+  const n=Math.min(cfg.nQ,avail);
+  G={KE:{c:0,t:0},SB:{c:0,t:0},US:{c:0,t:0},X:{c:0,t:0}};
+  S={mode:cfg.mode,ents,qs:buildQuestions(sel,n),i:0,steal:cfg.steal&&ents.length>1,timer:cfg.timer,stealing:false,removed:null,locked:true,iv:null,t0:0,vis:[],sheet:false};
+  if(n<cfg.nQ)toast("Only "+n+" questions available for that mix",2400);
+  showTurn();
+}
+
+/* ---------- turn flow ---------- */
+const askedEnt=()=>S.ents[S.i%S.ents.length];
+const askedPlayer=()=>{const e=askedEnt(),n=S.ents.length;return e.players[Math.floor(S.i/n)%e.players.length];};
+const actorEnt=()=>S.stealing?S.ents[(S.i+1)%S.ents.length]:askedEnt();
+function showTurn(){
+  if(S.mode==="solo"){beginQuestion();return;}
+  const e=actorEnt();
+  $("tRing").style.setProperty("--c",e.color);
+  $("tRing").textContent=S.stealing?"!":(S.i+1);
+  $("tTitle").textContent=S.stealing?"Steal chance":"Question "+(S.i+1)+" of "+S.qs.length;
+  $("tName").textContent=e.name;
+  $("tName").style.color=e.color;
+  let sub;
+  if(S.stealing)sub=S.mode==="team"?"Anyone on the team can answer. Correct earns half points.":"You can steal it. Correct earns half points.";
+  else sub=S.mode==="team"?askedPlayer()+" gives the answer this round, but the whole team can help.":"Your turn! Hand over the screen and get ready.";
+  $("tSub").textContent=sub;
+  show("turn");
+}
+$("tBtn").onclick=()=>beginQuestion();
+
+function renderSB(){
+  const act=actorEnt();
+  $("sbRow").innerHTML=S.ents.map(e=>`<div class="chip ${e===act?"on":""}" style="--c:${e.color}"><i></i><span>${esc(e.name)}</span><b>${e.score}</b></div>`).join("");
+}
+function stopTimer(){if(S&&S.iv){clearInterval(S.iv);S.iv=null;}}
+function setTimerUI(f,left){
+  $("tfill").style.width=(f*100)+"%";
+  $("tnum").textContent=S.timer?Math.ceil(left===undefined?S.timer:left):"";
+  $("tbar").classList.toggle("low",f<.3);
+}
+function tickTimer(){
+  const left=Math.max(0,S.timer-(Date.now()-S.t0)/1000);
+  setTimerUI(left/S.timer,left);
+  if(left<=0)timeout();
+}
+function closeSheet(){S.sheet=false;$("sheet").classList.remove("show");}
+function beginQuestion(){
+  stopTimer();closeSheet();
+  const r=S.qs[S.i],q=r.q,bucket=q.c.length>1?"X":q.c[0];
+  S.locked=false;S.t0=Date.now();
+  renderSB();
+  $("hudQ").textContent="Q "+(S.i+1)+" / "+S.qs.length;
+  const cc=$("hudC");
+  cc.textContent=q.c.length===3?"All three countries":q.c.map(c=>CNAME[c]).join(" + ");
+  cc.style.background=CCOL[bucket];cc.style.color="#0c1626";
+  const dd=$("hudD");dd.textContent=["Easy","Medium","Hard"][q.d-1];dd.className="pill "+["easy","medium","hard"][q.d-1];
+  const e=askedEnt();let who="";
+  if(S.mode==="team")who=S.stealing?actorEnt().name+": steal chance! Anyone can answer for half points":e.name+" - "+askedPlayer()+" answers (team can help)";
+  else if(S.mode==="pvp")who=S.stealing?actorEnt().name+": steal for half points!":e.name+"'s turn";
+  else who=e.streak>1?"Streak: "+e.streak+" in a row":"";
+  $("who").textContent=who;
+  $("qText").textContent=q.q;
+  $("qCard").style.setProperty("--c",CCOL[bucket]);
+  S.vis=r.opts.map((o,i)=>i).filter(i=>!(S.stealing&&r.opts[i]===S.removed));
+  $("opts").innerHTML=S.vis.map((oi,pos)=>`<button class="opt" data-oi="${oi}"><span class="ltr">${"ABCD"[pos]}</span><span>${esc(r.opts[oi])}</span></button>`).join("");
+  $("tbar").style.visibility=S.timer?"visible":"hidden";
+  setTimerUI(1);
+  show("play");
+  if(S.timer)S.iv=setInterval(tickTimer,100);
+}
+$("opts").addEventListener("click",e=>{const b=e.target.closest(".opt");if(b)answer(+b.dataset.oi);});
+function answer(oi){
+  if(!S||S.locked)return;
+  S.locked=true;stopTimer();
+  const r=S.qs[S.i];
+  resolve(r.opts[oi]===r.q.a,oi,false);
+}
+function timeout(){if(!S||S.locked)return;S.locked=true;stopTimer();resolve(false,-1,true);}
+
+function resolve(ok,oi,timedOut){
+  const r=S.qs[S.i],q=r.q,n=S.ents.length,asked=askedEnt(),p=askedPlayer(),actor=actorEnt();
+  const btns=[...document.querySelectorAll("#opts .opt")];btns.forEach(b=>b.disabled=true);
+  if(oi>=0){const b=btns.find(b=>+b.dataset.oi===oi);if(b)b.classList.add(ok?"right":"wrong");}
+  const base=[100,150,250][q.d-1],bucket=q.c.length>1?"X":q.c[0];
+  let pts=0;
+  if(!S.stealing){
+    asked.asked++;G[bucket].t++;
+    asked.ps[p]=asked.ps[p]||{c:0,t:0,pts:0};asked.ps[p].t++;
+    if(ok){
+      asked.streak++;
+      const left=S.timer?Math.max(0,S.timer-(Date.now()-S.t0)/1000):0;
+      pts=base+(S.timer?Math.round(left/S.timer*50):0)+Math.min(asked.streak-1,5)*20;
+      asked.score+=pts;asked.right++;G[bucket].c++;asked.ps[p].c++;asked.ps[p].pts+=pts;
+    }else asked.streak=0;
+  }else{
+    actor.stealTry++;
+    if(ok){pts=Math.round(base/2);actor.score+=pts;actor.stolen++;}
+  }
+  renderSB();
+  if(ok){beep([523,659,784]);confetti(q.d===3?190:100);}else beep([220,165],.18,"sawtooth",.08);
+  if(!ok&&!S.stealing&&S.steal&&n>1){
+    S.removed=oi>=0?r.opts[oi]:null;S.stealing=true;
+    toast((timedOut?"Time's up! ":"Not quite! ")+S.ents[(S.i+1)%n].name+" gets a steal chance",1800);
+    setTimeout(showTurn,1900);
+    return;
+  }
+  const cb=btns.find(b=>r.opts[+b.dataset.oi]===q.a);if(cb)cb.classList.add("right");
+  btns.forEach(b=>{if(!b.classList.contains("right")&&!b.classList.contains("wrong"))b.classList.add("dim");});
+  openSheet(ok,timedOut,actor,pts);
+}
+function openSheet(ok,timedOut,actor,pts){
+  const q=S.qs[S.i].q,bucket=q.c.length>1?"X":q.c[0];
+  const v=$("shV");v.textContent=ok?(S.stealing?"Steal!":"Correct!"):(timedOut?"Time's up!":"Not quite!");v.className=ok?"good":"bad";
+  let pl="";
+  if(ok)pl=(S.mode==="solo"?"":actor.name+" ")+"+"+pts+" pts"+(!S.stealing&&actor.streak>1?"  |  "+actor.streak+" in a row":"");
+  else if(S.stealing)pl="Nobody got it";
+  $("shP").textContent=pl;
+  const t=$("shT");t.textContent=q.c.length===3?"All three countries":q.c.map(c=>CNAME[c]).join(" + ");t.style.background=CCOL[bucket];
+  $("shA").textContent="Answer: "+q.a;
+  $("shF").textContent=q.f;
+  $("shN").textContent=S.i===S.qs.length-1?"See results":"Next question";
+  S.sheet=true;
+  setTimeout(()=>{if(S&&S.sheet)$("sheet").classList.add("show");},450);
+}
+function nextQ(){
+  if(!S||!S.sheet)return;
+  closeSheet();S.i++;S.stealing=false;S.removed=null;
+  if(S.i>=S.qs.length)finishGame();else showTurn();
+}
+$("shN").onclick=nextQ;
+
+/* ---------- results ---------- */
+function finishGame(){stopTimer();renderEnd();show("end");}
+function renderEnd(){
+  const sorted=[...S.ents].sort((a,b)=>b.score-a.score),top=sorted[0].score;
+  const winners=sorted.filter(e=>e.score===top);
+  let title,sub;
+  if(S.mode==="solo"){
+    const e=S.ents[0],pct=e.asked?e.right/e.asked:0;
+    title=pct>=.9?"Three Nations Master":pct>=.7?"World Wanderer":pct>=.5?"Curious Traveller":"Rookie Explorer";
+    sub=e.name+", you scored "+e.score+" points with "+e.right+" of "+e.asked+" right.";
+  }else{
+    title=winners.length===1?winners[0].name+" wins!":"It's a tie!";
+    sub=winners.length===1?"With "+top+" points. Great game, everyone.":winners.map(w=>w.name).join(" and ")+" both finished on "+top+" points.";
+  }
+  let h=`<h2 id="eTitle">${esc(title)}</h2><p id="eSub">${esc(sub)}</p>`;
+  if(S.mode!=="solo"){
+    sorted.forEach(e=>{
+      const pos=1+sorted.filter(o=>o.score>e.score).length;
+      let det="";
+      if(S.mode==="team")det=e.players.map(pn=>{const s=e.ps[pn];return esc(pn)+" "+(s?s.pts:0);}).join("  |  ");
+      h+=`<div class="rrow ${e.score===top?"win":""}" style="--c:${e.color}"><div class="pos">${pos}</div><div class="rn"><b>${esc(e.name)}</b><small>${det}</small></div><div class="rs"><b>${e.score}</b><small>${e.right}/${e.asked} correct${e.stolen?"  |  "+e.stolen+" stolen":""}</small></div></div>`;
+    });
+  }
+  const labels={KE:"Kenya",SB:"Solomon Islands",US:"USA",X:"Cross-country"};
+  let bars="";
+  ["KE","SB","US","X"].forEach(k=>{
+    const g=G[k];if(!g.t)return;
+    bars+=`<div class="bar"><div class="bl"><span>${labels[k]}</span><span>${g.c} / ${g.t} right</span></div><div class="bt"><i style="width:${Math.round(g.c/g.t*100)}%;background:${CCOL[k]}"></i></div></div>`;
+  });
+  if(bars)h+=`<div class="panel"><h3>How everyone did, by country</h3>${bars}</div>`;
+  h+=`<div class="endbtns"><button class="btn" data-act="again">Play again</button><button class="btn small" style="background:#fff;box-shadow:0 5px 0 #aaa" data-act="setup">Change setup</button><button class="btn small" style="background:#fff;box-shadow:0 5px 0 #aaa" data-act="home">Home</button></div>`;
+  $("endBody").innerHTML=h;
+  confetti(S.mode==="solo"?(top>0?200:40):260);
+  beep([523,659,784,1047],.14);
+}
+$("end").addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;
+  if(b.dataset.act==="again")startFromSetup();
+  else if(b.dataset.act==="setup"){renderSetup();show("setup");}
+  else if(b.dataset.act==="home"){updateHome();show("home");}
+});
+
+/* ---------- keyboard ---------- */
+addEventListener("keydown",e=>{
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(tag==="input"||tag==="textarea")return;
+  const k=e.key.toLowerCase();
+  if(S&&isActive("play")&&!S.locked){
+    const map={"1":0,"2":1,"3":2,"4":3,a:0,b:1,c:2,d:3};
+    if(k in map&&S.vis[map[k]]!==undefined)answer(S.vis[map[k]]);
+  }
+  if((k==="enter"||k===" ")&&S&&S.sheet&&$("sheet").classList.contains("show")){e.preventDefault();nextQ();}
+  else if(k==="enter"&&isActive("turn")){e.preventDefault();beginQuestion();}
+});
+
+updateHome();
+</script>
+</body>
+</html>
