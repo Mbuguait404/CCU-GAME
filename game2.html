@@ -143,12 +143,13 @@
 
 <script>
 /* =====================================================================
-   THE SCENE BANK (50 scenes)
+   THE SCENE BANK (60 scenes)
    id    = unique number. NEVER change an id once used: it powers the
            no-repeat memory. New scenes get the next free number.
    c     = correct country: "ID" (Indonesia) or "KE" (Kenya)
    d     = difficulty: 1 easy, 2 medium, 3 lookalike trap
    img   = Wikimedia Commons file name (or a full https image link)
+   q     = optional Commons search words used if both photos fail
    alt   = optional backup file name, tried automatically if img fails
    g     = fallback gradient if neither photo loads
    Photos marked VERIFIED came directly from search results.
@@ -175,7 +176,7 @@ const BANK = [
    place:"Prambanan, Central Java", fact:"Prambanan is the largest Hindu temple compound in Indonesia." },
  { id:9, c:"ID", d:1, tag:"Wildlife", img:"Komodo dragon.jpg", alt:"Komodo dragon Komodo National Park.jpg", g:["#5a4a2a","#b89a5a"],
    place:"Komodo National Park", fact:"Komodo dragons live nowhere else in the wild but a few Indonesian islands." },
- { id:10, c:"ID", d:1, tag:"Island paradise", img:"Pink Beach Komodo.jpg", alt:"Pink Beach, Komodo.jpg", g:["#b05a7a","#f2b6c6"],
+ { id:10, c:"ID", d:1, tag:"Island paradise", q:"Pink Beach Komodo", img:"Pink Beach Komodo.jpg", alt:"Pink Beach, Komodo.jpg", g:["#b05a7a","#f2b6c6"],
    place:"Pink Beach, Komodo", fact:"Crushed red coral gives this beach its pink tint." },
 
  /* ============ INDONESIA: MEDIUM ============ */
@@ -207,11 +208,11 @@ const BANK = [
    place:"Sumba grassland with sandalwood horses", fact:"Sandalwood ponies roam open grassland that could pass for the Serengeti." }, // VERIFIED
  { id:23, c:"ID", d:3, tag:"Looks like savanna", img:"Liarnya keindahan Sumba.jpg", alt:"Puru Kambera, Sumba Timur.jpg", g:["#a0842f","#ecd89a"],
    place:"Sumba, East Nusa Tenggara", fact:"Sumba is one of Indonesia's driest islands, with a long dry season." }, // VERIFIED
- { id:24, c:"ID", d:3, tag:"Looks like savanna", img:"Gersang Sabana.jpg", alt:"Padang Sabana.jpg", g:["#8d6f25","#dfc17a"],
+ { id:24, c:"ID", d:3, tag:"Looks like savanna", img:"Gersang Sabana.jpg", alt:"Sabana Baluran.jpg", g:["#8d6f25","#dfc17a"],
    place:"Dry savanna, Indonesia", fact:"Several Indonesian parks, such as Baluran in East Java, are nicknamed Little Africa." }, // VERIFIED
  { id:25, c:"ID", d:3, tag:"Looks like savanna", img:"Oro Oro Ombo.jpg", alt:"Oro-oro Ombo.jpg", g:["#6f8a3a","#cddf8f"],
    place:"Oro-oro Ombo, Mount Semeru", fact:"This golden grassland sits at the foot of Java's highest volcano." }, // VERIFIED
- { id:26, c:"ID", d:3, tag:"Looks like Rift Valley", img:"Padang Sabana.jpg", alt:"Hamparan Sabana di Kawasan Gunung Merbabu.jpg", g:["#8a7a35","#dccb85"],
+ { id:26, c:"ID", d:3, tag:"Looks like Rift Valley", q:"savanna grassland Indonesia hill", img:"Padang Sabana.jpg", alt:"Savana Bromo.jpg", g:["#8a7a35","#dccb85"],
    place:"Open savanna, Indonesia", fact:"Wide grass plains with scattered trees are rare in Indonesia, which is why they fool people." }, // VERIFIED
  { id:27, c:"ID", d:3, tag:"Looks like savanna", img:"Bekol Savanna Baluran.jpg", alt:"Baluran National Park.jpg", g:["#9a8230","#e6d28f"],
    place:"Bekol Savanna, Baluran National Park", fact:"Baluran is nicknamed Little Africa for its savanna and wild banteng cattle." },
@@ -237,11 +238,11 @@ const BANK = [
    place:"Lake Nakuru, Rift Valley", fact:"Flamingo numbers rise and fall with the lake's water level and algae." },
  { id:37, c:"KE", d:1, tag:"Wildlife", img:"Lion Masai Mara.jpg", alt:"Lion in Maasai Mara.jpg", g:["#7a5a2a","#d8b878"],
    place:"Maasai Mara", fact:"Lions in the Mara hunt the migrating herds as they cross the plains." },
- { id:38, c:"KE", d:1, tag:"Wildlife", img:"Giraffe Nairobi National Park.jpg", alt:"Masai giraffe.jpg", g:["#8a6a3a","#e0c890"],
+ { id:38, c:"KE", d:1, tag:"Wildlife", q:"giraffe Nairobi National Park", img:"Giraffe Nairobi National Park.jpg", alt:"Masai giraffe.jpg", g:["#8a6a3a","#e0c890"],
    place:"Nairobi National Park", fact:"You can watch giraffes with city skyscrapers on the horizon." },
  { id:39, c:"KE", d:1, tag:"Wildlife", img:"Amboseli elephants Kilimanjaro.jpg", alt:"Amboseli National Park.jpg", g:["#6a6a8a","#c0c0d8"],
    place:"Amboseli National Park", fact:"Amboseli is famous for elephants framed by Mount Kilimanjaro, just across the border in Tanzania." },
- { id:40, c:"KE", d:1, tag:"Savanna", img:"Acacia tree Maasai Mara.jpg", alt:"Acacia tree in the Maasai Mara.jpg", g:["#8a6a2a","#e8cc8a"],
+ { id:40, c:"KE", d:1, tag:"Savanna", q:"acacia tree Maasai Mara", img:"Acacia tree Maasai Mara.jpg", alt:"Acacia tree in the Maasai Mara.jpg", g:["#8a6a2a","#e8cc8a"],
    place:"Maasai Mara", fact:"The flat-topped acacia is the classic shape of the East African plains." },
 
  /* ============ KENYA: MEDIUM ============ */
@@ -367,22 +368,62 @@ function tick() {
 /* ---------- screens ---------- */
 function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList.remove("active")); $(id).classList.add("active"); }
 
-/* Tries the main photo, then the backup, then falls back to the gradient */
-function setBg(r) {
-  const bg = $("bg");
+/* Tries main photo, backup photo, then a live Wikimedia Commons search, then the gradient */
+const SRC_KEY = "idke_src_v1", usedUrls = new Set();
+function loadSrcCache(){ try { return JSON.parse(localStorage.getItem(SRC_KEY) || "{}"); } catch(e){ return {}; } }
+function saveSrcCache(c){ try { localStorage.setItem(SRC_KEY, JSON.stringify(c)); } catch(e){} }
+
+function tryImage(url){
+  return new Promise(res => {
+    const im = new Image(); let done = false;
+    const fin = ok => { if (!done){ done = true; res(ok ? url : null); } };
+    im.onload = () => fin(true); im.onerror = () => fin(false);
+    setTimeout(() => fin(false), 8000);
+    im.src = url;
+  });
+}
+
+async function commonsSearch(r){
+  const q = r.q || (r.place + (r.c === "ID" ? " Indonesia" : " Kenya"));
+  const api = "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=15"
+    + "&prop=imageinfo&iiprop=url|mime&iiurlwidth=1800&gsrsearch=" + encodeURIComponent(q + " filetype:bitmap");
+  try {
+    const resp = await fetch(api); const data = await resp.json();
+    const pages = Object.values((data.query && data.query.pages) || {}).sort((x,y) => x.index - y.index);
+    for (const p of pages) {
+      const ii = p.imageinfo && p.imageinfo[0];
+      if (!ii || !/jpeg/.test(ii.mime)) continue;
+      const u = ii.thumburl || ii.url;
+      if (usedUrls.has(u)) continue;
+      if (await tryImage(u)) return u;
+    }
+  } catch(e){}
+  return null;
+}
+
+/* Resolves to a working image URL, or null. Always settles. */
+async function findImage(r){
+  const cache = loadSrcCache();
+  if (cache[r.id] && await tryImage(cache[r.id])) return cache[r.id];
+  for (const f of [r.img, r.alt].filter(Boolean)) {
+    const u = await tryImage(pic(f));
+    if (u && !usedUrls.has(u)) return u;
+  }
+  const u = await commonsSearch(r);
+  if (u) { cache[r.id] = u; saveSrcCache(cache); }
+  return u;
+}
+
+let bgToken = 0;
+async function setBg(r) {
+  const bg = $("bg"), token = ++bgToken;
   bg.classList.remove("zoom"); bg.style.opacity = 0;
   bg.style.backgroundImage = `linear-gradient(160deg, ${r.g[0]}, ${r.g[1]})`;
-  const sources = [r.img, r.alt].filter(Boolean);
-  let tried = 0;
-  const attempt = () => {
-    if (tried >= sources.length) { bg.style.opacity = 1; return; }
-    const im = new Image(); const src = pic(sources[tried++]);
-    im.onload = () => { bg.style.backgroundImage = `url("${im.src}")`; bg.style.opacity = 1; void bg.offsetWidth; bg.classList.add("zoom"); };
-    im.onerror = attempt;
-    im.src = src;
-  };
-  attempt();
-  setTimeout(() => { bg.style.opacity = 1; }, 2500);
+  const url = await findImage(r);
+  if (token !== bgToken) return url;
+  if (url) { usedUrls.add(url); bg.style.backgroundImage = `url("${url}")`; }
+  bg.style.opacity = 1; void bg.offsetWidth; if (url) bg.classList.add("zoom");
+  return url;
 }
 
 function buildDots(){ $("dots").innerHTML = rounds.map(() => "<i></i>").join(""); }
@@ -396,8 +437,9 @@ const LEVELS = { 1:["easy","Easy"], 2:["medium","Medium"], 3:["hard","Lookalike"
 
 function loadRound() {
   const r = rounds[cur];
-  locked = false; roundStart = Date.now();
-  setBg(r);
+  locked = true; roundStart = Date.now();
+  const myCur = cur;
+  setBg(r).then(() => { if (cur === myCur && !$("reveal").classList.contains("show")) { locked = false; roundStart = Date.now(); } });
   const lv = $("level"); lv.className = "hud-chip " + LEVELS[r.d][0]; lv.textContent = LEVELS[r.d][1];
   $("score").textContent = score + " pts";
   $("prompt").textContent = r.d === 3 ? "Careful... this one is a trap" : r.d === 2 ? "Not so obvious this time" : "Where in the world is this?";
@@ -461,6 +503,7 @@ function finish() {
 }
 
 function start() {
+  usedUrls.clear();
   rounds = pickGame(); cur = 0; score = 0; streak = 0; results = []; fooledBy = [];
   buildDots(); show("game"); loadRound();
 }
